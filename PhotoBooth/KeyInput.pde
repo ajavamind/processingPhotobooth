@@ -2,6 +2,11 @@ static final int KEYCODE_ENTER = 10;
 static final int KEYCODE_ESC = 27;
 static final int KEYCODE_SPACE = 32;
 
+void mousePressed() {
+      if (!photoBoothController.isPhotoShoot) {
+      photoBoothController.tryPhotoShoot();
+    }
+}
 
 void keyPressed() {
   int lastKeyCode = keyCode;
