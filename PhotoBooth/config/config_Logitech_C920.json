@@ -1,0 +1,21 @@
+{ "description": "Photo Booth Configuration",
+  "configuration": 
+  {
+    "debug": true,
+    "name": "Photobooth",
+	"outputFolderPath": "output",
+	"IPaddress": "192.168.1.130",
+	"mirrorScreen": false,
+	"countDownStart": 3,
+	"fileType": "jpg",
+	"eventText": "Your Photo Booth Event",
+	"instructionLineText": "\u2191Look Here\u2191",
+    "camera": {
+    	"name" : "HD Pro Webcam C920", 
+        "width": 1920,
+		"height": 1080,
+		"fps": 30,
+		"pipeline": "pipeline: ksvideosrc device-index=0 ! image/jpeg, width=1920, height=1080, framerate=30/1 ! jpegdec ! videoconvert"
+    }
+  }
+}
