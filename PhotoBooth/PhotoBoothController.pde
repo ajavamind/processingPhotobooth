@@ -2,6 +2,8 @@ class PhotoBoothController {
   int currentState;
   PImage[] images;
   PImage currentImage;
+  String datetime;
+
   boolean isPhotoShoot, endPhotoShoot;
   volatile int startPhotoShoot;
   int photoDelay = 20;
@@ -49,46 +51,24 @@ class PhotoBoothController {
     }
   }
 
-  private void drawImage(PImage input, int state) {
-    if (flipHorz) {
+  private void drawImage(PImage input) {
+    if (mirror) {
       pushMatrix();
       scale(-1, 1);
-      if (state == 0) {
-        image(input, -PANEL_WIDTH, 0, PANEL_WIDTH, PANEL_HEIGHT);
-      } else if (state == 1) {
-        translate(-PANEL_WIDTH, 0);
-        image(input, -PANEL_WIDTH-dividerSize, 0, PANEL_WIDTH, PANEL_HEIGHT);
-      } else if (state == 2) {
-        image(input, -PANEL_WIDTH, PANEL_HEIGHT + dividerSize, PANEL_WIDTH, PANEL_HEIGHT);
-      } else if (state == 3) {
-        translate(-PANEL_WIDTH, 0);
-        image(input, -PANEL_WIDTH-dividerSize, PANEL_HEIGHT + dividerSize, PANEL_WIDTH, PANEL_HEIGHT);
-      }
+      image(input, -SCREEN_WIDTH, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
       popMatrix();
     } else {
-      if (state == 0) {
-        image(input, 0, 0, PANEL_WIDTH, PANEL_HEIGHT);
-      } else if (state == 1) {
-        image(input, PANEL_WIDTH + dividerSize, 0, PANEL_WIDTH, PANEL_HEIGHT);
-      } else if (state == 2) {
-        image(input, 0, PANEL_HEIGHT + dividerSize, PANEL_WIDTH, PANEL_HEIGHT);
-      } else if (state == 3) {
-        image(input, PANEL_WIDTH + dividerSize, PANEL_HEIGHT + dividerSize, PANEL_WIDTH, PANEL_HEIGHT);
-      }
+      image(input, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
     }
   }
 
   public void drawPrevious() {
-    if (numberOfPanels > 1) {
-      for (int i=0; i<currentState; i++) {
-        drawImage(images[i], i);
-        //if(DEBUG) println("draw panel "+i);
-      }
-    } else {
-      // one panel
-      drawImage(images[0], 0);
-      if (DEBUG) println("draw one panel");
-    }
+    drawImage(images[currentState]);
+  }
+
+  public void drawCurrent() {
+    drawImage(currentImage);
+    drawMaskForScreen(printAspectRatio);
   }
 
   public void oldShoot() {
@@ -100,16 +80,18 @@ class PhotoBoothController {
 
   public void processImage(Capture input) {
     currentImage = imageProcessor.processImage(input);
-    drawImage(currentImage, currentState);
+    drawImage(currentImage);
+    drawMaskForScreen(printAspectRatio);
   }
 
   public void tryPhotoShoot() {
     if (!isPhotoShoot) startPhotoShoot();
     else {
+
       endPhotoShoot = false;
       isPhotoShoot = false;
       background(0);
-      drawDivider(numberOfPanels);
+      //drawDivider(numberOfPanels);
 
       //imageProcessor.filterNum = 0;
     }
@@ -123,62 +105,79 @@ class PhotoBoothController {
 
   public void endPhotoShoot() {
     endPhotoShoot = true;
-    startPhotoShoot = 0;
+    //startPhotoShoot = 0;
     oldShoot = 0;
     drawPrevious();
   }
 
   public void drawPhotoShoot() {
+    background(0);
     int digit = getCountDownDigit(countdownStart);
     if (digit > 0 && !endPhotoShoot) {
-      fill(64);
-      rect(COUNTDOWN_BOX_X, COUNTDOWN_BOX_Y, COUNTDOWN_BOX_WIDTH, COUNTDOWN_BOX_HEIGHT);
-      fill(255);
+      drawCurrent();
+      //fill(64);
+      //rect(COUNTDOWN_BOX_X, COUNTDOWN_BOX_Y, COUNTDOWN_BOX_WIDTH, COUNTDOWN_BOX_HEIGHT);
+      fill(0x80FFFF80);
+      textSize(largeFontSize);
       text(str(digit), COUNTDOWN_TEXT_X, COUNTDOWN_TEXT_Y);
+      textSize(fontSize);
+      fill(255);
     } else if (digit == 0) {
+      drawCurrent();
+    } else if (digit == -1) {
       // flash screen and take photo
       //background(255);
       background(0);
-      drawDivider(numberOfPanels);
+      //drawDivider(numberOfPanels);
       boolean done = incrementState();
-      drawPrevious();
+      //drawPrevious();
       if (done) {
-        String datetime = getDateTime();
-        if (DEBUG) println("save photos "+datetime);
-        saveImages(images, OUTPUT_FOLDER_PATH, OUTPUT_FILENAME, datetime + "", fileType);
+        drawPrevious();
+        String saved = "Saved "+datetime;
+        float tw = textWidth(saved);
+        text(saved, SCREEN_WIDTH/2- tw/2, SCREEN_HEIGHT-SCREEN_HEIGHT/32);
         if (numberOfPanels == 4) {
-          saveCompositeScreen(OUTPUT_FOLDER_PATH, OUTPUT_COMPOSITE_FILENAME, datetime + "_5", fileType);
+          if (DEBUG) println("save collage " + datetime);
+          PGraphics pg = saveCollage(OUTPUT_FOLDER_PATH, OUTPUT_COMPOSITE_FILENAME, datetime, fileType);
+          PImage img = pg.copy();
+          pg.dispose();
+          float bw = (cameraWidth-(cameraHeight/printAspectRatio))/2.0;
+          int sx = int(bw);
+          image(img, sx/2, 0, img.width/4, img.height/4);
         } else if (numberOfPanels == 2) {
-          saveCompositeScreen(OUTPUT_FOLDER_PATH, OUTPUT_COMPOSITE_FILENAME, datetime + "_2x1", fileType);
+          saveScreen(OUTPUT_FOLDER_PATH, OUTPUT_COMPOSITE_FILENAME, datetime + "_2x1", fileType);
         }
-        text("Saved "+datetime, SCREEN_WIDTH/6, SCREEN_HEIGHT-SCREEN_HEIGHT/32);
+        drawMaskForScreen(printAspectRatio);
       }
       startPhotoShoot=0;
     }
-
     startPhotoShoot++;
   }
 
   int getCountDownDigit(int initial) {
     int cdd = -1;
-    if (startPhotoShoot < photoDelay) {
+    int aDelay = photoDelay/4;
+    if (numberOfPanels == 4) {
+      aDelay = photoDelay/4;
+    }
+    if (startPhotoShoot < aDelay) {
       cdd = initial;
-    } else if (startPhotoShoot >= photoDelay && startPhotoShoot < 2*photoDelay) {
+    } else if (startPhotoShoot >= aDelay && startPhotoShoot < 2*aDelay) {
       cdd = initial-1;
-    } else if (startPhotoShoot >= 2*photoDelay && startPhotoShoot < 3*photoDelay) {
+    } else if (startPhotoShoot >= 2*aDelay && startPhotoShoot < 3*aDelay) {
       cdd = initial-2;
-    } else if (startPhotoShoot >= 3*photoDelay && startPhotoShoot < 4*photoDelay) {
+    } else if (startPhotoShoot >= 3*aDelay && startPhotoShoot < 4*aDelay) {
       cdd = initial-3;
-    } else if (startPhotoShoot >= 4*photoDelay) {
+    } else if (startPhotoShoot >= 4*aDelay) {
       cdd = initial-4;
     }
     return cdd;
   }
 
-  public void incrementFilter() {
+  public void nextFilter() {
     imageProcessor.filterNum = (imageProcessor.filterNum+1)%filters.length;
   }
-  public void decrementFilter() {
+  public void previousFilter() {
     imageProcessor.filterNum--;
     if (imageProcessor.filterNum < 0) {
       imageProcessor.filterNum = filters.length-1;
@@ -187,12 +186,17 @@ class PhotoBoothController {
   public boolean incrementState() {
     boolean done = false;
     images[currentState] = currentImage.get();
+    if (currentState == 0) {
+      datetime = getDateTime();
+    }
+    if (DEBUG) println("save photo "+ (currentState+1) + " " + datetime);
+    saveImage(images[currentState], currentState, OUTPUT_FOLDER_PATH, OUTPUT_FILENAME, datetime + "", fileType);
     currentState += 1;
     if (currentState == numberOfPanels) {
       done = true;
+      currentState=0;
       endPhotoShoot();
     }
-    currentState = currentState%numberOfPanels;
     return done;
   }
 }

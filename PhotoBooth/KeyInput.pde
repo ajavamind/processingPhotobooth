@@ -74,6 +74,12 @@ static final int KEYCODE_SINGLE_QUOTE = 222;
 //static final int KEYCODE_TRIGGER_COLLAGE = 1001;
 
 private static final int NOP = 0;
+private static final int EXIT = 1;
+
+// lastKey and lastKeyCode are handled in the draw loop
+private int lastKey;
+private int lastKeyCode;
+
 
 // remote joystick key B - ESC key A - LEFT
 void mousePressed() {
@@ -82,12 +88,9 @@ void mousePressed() {
   if (DEBUG) println("mouseButton="+mouseButton + " LEFT=" + LEFT + " RIGHT="+RIGHT+" CENTER="+CENTER);
   if (button == LEFT) {  // remote key A
     lastKeyCode = KEYCODE_ENTER;
+    println("lastKeyCode="+lastKeyCode);
   }
 }
-
-// lastKey and lastKeyCode are handled in the draw loop
-private int lastKey;
-private int lastKeyCode;
 
 void keyReleased() {
 }
@@ -103,7 +106,7 @@ void keyPressed() {
     //    return;
   } else if (key == 65535 && keyCode == 0) { // special case all other keys
     key = 0;
-    keyCode = KEYCODE_4;
+    keyCode = KEYCODE_4;  // use collage mode
   }
   lastKey = key;
   lastKeyCode = keyCode;
@@ -122,29 +125,29 @@ int keyUpdate() {
       cam.stop();
       cam.dispose();
     }
-    cam = null;
     exit();
     break;
-  case KEYCODE_SPACE:
+    //case KEYCODE_SPACE:
+  case KEYCODE_1:
   case KEYCODE_ENTER:
-    setPhoto();
-    if (!photoBoothController.isPhotoShoot) {
-      photoBoothController.tryPhotoShoot();
+    if (numberOfPanels == 1) {
+      if (!photoBoothController.isPhotoShoot) {
+        photoBoothController.tryPhotoShoot();
+      }
+    } else {
+      setPhoto();
     }
+    cmd = ENTER;
     break;
   case LEFT:
-    photoBoothController.decrementFilter();
+    photoBoothController.previousFilter();
     break;
   case RIGHT:
-    photoBoothController.incrementFilter();
+    photoBoothController.nextFilter();
     break;
   case KEYCODE_M:  // mirror view
-    flipHorz = !flipHorz;
-    if (DEBUG) println("flipHorz="+flipHorz);
-    break;
-  case KEYCODE_1:
-    if (numberOfPanels == 1) break;
-    setPhoto();
+    mirror = !mirror;
+    if (DEBUG) println("mirror="+mirror);
     break;
   case KEYCODE_2:  // for 3D stereo not implemented
     if (numberOfPanels == 2) break;
@@ -153,9 +156,20 @@ int keyUpdate() {
     photoBoothController.updatePanelSize();
     break;
   case KEYCODE_4:
-    if (numberOfPanels == 4) break;
-    setCollage();
+    if (numberOfPanels == 4) {
+      if (!photoBoothController.isPhotoShoot) {
+        photoBoothController.tryPhotoShoot();
+      }
+    } else {
+      setCollage();
+    }
     break;
+  case KEYCODE_O:  // toggle orientation
+    if (orientation == LANDSCAPE) {
+      orientation = PORTRAIT;
+    } else {
+      orientation = LANDSCAPE;
+    }
   default:
     break;
   }
@@ -166,20 +180,14 @@ int keyUpdate() {
 }
 
 void setPhoto() {
-    numberOfPanels = 1;
-    background(0);
-    photoBoothController.updatePanelSize();  
-    if (!photoBoothController.isPhotoShoot) {
-      photoBoothController.tryPhotoShoot();
-    }
+  numberOfPanels = 1;
+  background(0);
+  photoBoothController.updatePanelSize();
 }
 
 void setCollage() {
-    numberOfPanels = 4;
-    background(0);
-    drawDivider(numberOfPanels);
-    photoBoothController.updatePanelSize();
-    if (!photoBoothController.isPhotoShoot) {
-      photoBoothController.tryPhotoShoot();
-    }
+  numberOfPanels = 4;
+  background(0);
+  //drawDivider(numberOfPanels);
+  photoBoothController.updatePanelSize();
 }

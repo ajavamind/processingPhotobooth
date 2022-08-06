@@ -3,19 +3,25 @@
   {
     "debug": true,
     "name": "Photobooth",
-	"outputFolderPath": "output",
+	"outputFolderPath": "C:\\Apache24\\htdocs\\data\\images",
 	"IPaddress": "192.168.1.130",
-	"mirrorScreen": false,
+	"mirrorScreen": true,
 	"countDownStart": 3,
 	"fileType": "jpg",
 	"eventText": "Your Photo Booth Event",
-	"instructionLineText": "\u2191Look Here\u2191",
+	"instructionLineText": "^Look Here^",
     "camera": {
-    	"name" : "Logitech BRIO", 
+    	"name": "Logitech BRIO", 
         "width": 3840,
 		"height": 2160,
 		"fps": 30,
+		"orientation": "landscape",
 		"pipeline": "pipeline: ksvideosrc device-index=0 ! image/jpeg,width=3840,height=2160,framerate=30/1 ! jpegdec ! videoconvert"
-    }
+    },
+	"printer": {
+		"name": "Canon Selphy 1300",
+		"printWidth": 4.0,
+		"printHeight": 6.0
+	}
   }
 }
