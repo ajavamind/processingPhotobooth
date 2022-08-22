@@ -88,7 +88,9 @@ void mousePressed() {
   if (DEBUG) println("mouseButton="+mouseButton + " LEFT=" + LEFT + " RIGHT="+RIGHT+" CENTER="+CENTER);
   if (button == LEFT) {  // remote key A
     lastKeyCode = KEYCODE_ENTER;
-    println("lastKeyCode="+lastKeyCode);
+    if (DEBUG) println("mousePressed set lastKeyCode="+lastKeyCode);
+  } else if (button == RIGHT) {
+    lastKeyCode = KEYCODE_SPACE;
   }
 }
 
@@ -116,7 +118,7 @@ void keyPressed() {
 // returns NOP on no key processed
 // returns command code when a key is to be processed
 int keyUpdate() {
-  int cmd = NOP;
+  int cmd = NOP;  // return code
 
   switch(lastKeyCode) {
   case KEYCODE_ESC:
@@ -127,7 +129,6 @@ int keyUpdate() {
     }
     exit();
     break;
-    //case KEYCODE_SPACE:
   case KEYCODE_1:
   case KEYCODE_ENTER:
     if (numberOfPanels == 1) {
@@ -164,12 +165,25 @@ int keyUpdate() {
       setCollage();
     }
     break;
-  case KEYCODE_O:  // toggle orientation
-    if (orientation == LANDSCAPE) {
-      orientation = PORTRAIT;
-    } else {
-      orientation = LANDSCAPE;
-    }
+  case KEYCODE_P:  // portrait orientation
+    orientation = PORTRAIT;
+    if (DEBUG) println("orientation="+(orientation==LANDSCAPE? "Landscape":"Portrait"));
+    break;
+  case KEYCODE_L:  // landscape orientation
+    orientation = LANDSCAPE;
+    if (DEBUG) println("orientation="+(orientation==LANDSCAPE? "Landscape":"Portrait"));
+    break;
+  case KEYCODE_O:  // display orientation
+    if (DEBUG) println("mirror="+mirror + " orientation="+(orientation==LANDSCAPE? "Landscape":"Portrait"));
+    break;
+  case KEYCODE_SPACE:
+    // preview last photo or collage
+    preview = !preview;
+    if (DEBUG) println("preview="+preview);
+    break;
+  case KEYCODE_D: // toggle DEBUG
+    DEBUG = !DEBUG;
+    break;
   default:
     break;
   }
@@ -188,6 +202,5 @@ void setPhoto() {
 void setCollage() {
   numberOfPanels = 4;
   background(0);
-  //drawDivider(numberOfPanels);
   photoBoothController.updatePanelSize();
 }

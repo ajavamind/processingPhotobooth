@@ -2,6 +2,7 @@ class PhotoBoothController {
   int currentState;
   PImage[] images;
   PImage currentImage;
+  PImage collage;
   String datetime;
 
   boolean isPhotoShoot, endPhotoShoot;
@@ -23,12 +24,12 @@ class PhotoBoothController {
   public PhotoBoothController() {
     updatePanelSize();
 
-    COUNTDOWN_BOX_WIDTH = SCREEN_WIDTH/20;
-    COUNTDOWN_BOX_HEIGHT = 2*SCREEN_HEIGHT/20;
-    COUNTDOWN_BOX_X = SCREEN_WIDTH/2-COUNTDOWN_BOX_WIDTH/2;
-    COUNTDOWN_BOX_Y = SCREEN_HEIGHT/2-COUNTDOWN_BOX_HEIGHT/2;
-    COUNTDOWN_TEXT_X = SCREEN_WIDTH/2-COUNTDOWN_BOX_WIDTH/4;
-    COUNTDOWN_TEXT_Y = SCREEN_HEIGHT/2+COUNTDOWN_BOX_HEIGHT/4;
+    COUNTDOWN_BOX_WIDTH = screenWidth/20;
+    COUNTDOWN_BOX_HEIGHT = 2*screenHeight/20;
+    COUNTDOWN_BOX_X = screenWidth/2-COUNTDOWN_BOX_WIDTH/2;
+    COUNTDOWN_BOX_Y = screenHeight/2-COUNTDOWN_BOX_HEIGHT/2;
+    COUNTDOWN_TEXT_X = screenWidth/2-COUNTDOWN_BOX_WIDTH/4;
+    COUNTDOWN_TEXT_Y = screenHeight/2+COUNTDOWN_BOX_HEIGHT/4;
 
     currentState = 0;
     startPhotoShoot = 0;
@@ -43,11 +44,11 @@ class PhotoBoothController {
 
   void updatePanelSize() {
     if (numberOfPanels == MAX_PANELS) {
-      PANEL_WIDTH = SCREEN_WIDTH/2;
-      PANEL_HEIGHT = SCREEN_HEIGHT/2;
+      PANEL_WIDTH = screenWidth/2;
+      PANEL_HEIGHT = screenHeight/2;
     } else {
-      PANEL_WIDTH = SCREEN_WIDTH;
-      PANEL_HEIGHT = SCREEN_HEIGHT;
+      PANEL_WIDTH = screenWidth;
+      PANEL_HEIGHT = screenHeight;
     }
   }
 
@@ -55,15 +56,38 @@ class PhotoBoothController {
     if (mirror) {
       pushMatrix();
       scale(-1, 1);
-      image(input, -SCREEN_WIDTH, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+      image(input, -screenWidth, 0, screenWidth, screenHeight);
       popMatrix();
     } else {
-      image(input, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+      if (orientation == LANDSCAPE) {
+        image(input, 0, 0, screenWidth, screenHeight);
+      } else {
+        pushMatrix();
+        translate(width/2, height/2);
+        rotate(-PI);
+        image(input, -screenWidth/2, -screenHeight/2, screenWidth, screenHeight);
+        popMatrix();
+      }
     }
   }
 
   public void drawPrevious() {
     drawImage(images[currentState]);
+  }
+
+  public void drawLast() {
+    if (numberOfPanels == 1) {
+      if (images[0] != null) {
+        drawImage(images[0]);
+      }
+    } else {
+      if (collage != null) {
+        float bw = (cameraWidth-(cameraHeight/printAspectRatio))/2.0;
+        int sx = int(bw);
+        image(collage, sx/2, 0, collage.width/4, collage.height/4);
+      }
+    }
+    drawMaskForScreen(printAspectRatio);
   }
 
   public void drawCurrent() {
@@ -91,8 +115,6 @@ class PhotoBoothController {
       endPhotoShoot = false;
       isPhotoShoot = false;
       background(0);
-      //drawDivider(numberOfPanels);
-
       //imageProcessor.filterNum = 0;
     }
   }
@@ -105,7 +127,6 @@ class PhotoBoothController {
 
   public void endPhotoShoot() {
     endPhotoShoot = true;
-    //startPhotoShoot = 0;
     oldShoot = 0;
     drawPrevious();
   }
@@ -126,24 +147,22 @@ class PhotoBoothController {
       drawCurrent();
     } else if (digit == -1) {
       // flash screen and take photo
-      //background(255);
       background(0);
-      //drawDivider(numberOfPanels);
       boolean done = incrementState();
       //drawPrevious();
       if (done) {
         drawPrevious();
         String saved = "Saved "+datetime;
         float tw = textWidth(saved);
-        text(saved, SCREEN_WIDTH/2- tw/2, SCREEN_HEIGHT-SCREEN_HEIGHT/32);
+        text(saved, screenWidth/2- tw/2, screenHeight-screenHeight/32);
         if (numberOfPanels == 4) {
           if (DEBUG) println("save collage " + datetime);
           PGraphics pg = saveCollage(OUTPUT_FOLDER_PATH, OUTPUT_COMPOSITE_FILENAME, datetime, fileType);
-          PImage img = pg.copy();
+          collage = pg.copy();
           pg.dispose();
           float bw = (cameraWidth-(cameraHeight/printAspectRatio))/2.0;
           int sx = int(bw);
-          image(img, sx/2, 0, img.width/4, img.height/4);
+          image(collage, sx/2, 0, collage.width/4, collage.height/4);
         } else if (numberOfPanels == 2) {
           saveScreen(OUTPUT_FOLDER_PATH, OUTPUT_COMPOSITE_FILENAME, datetime + "_2x1", fileType);
         }

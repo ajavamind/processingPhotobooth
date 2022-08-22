@@ -1,21 +1,30 @@
-{ "description": "Photo Booth Configuration",
-  "configuration": 
-  {
-    "debug": true,
-    "name": "Photobooth",
-	"outputFolderPath": "output",
-	"IPaddress": "192.168.1.130",
-	"mirrorScreen": false,
-	"countDownStart": 3,
-	"fileType": "jpg",
-	"eventText": "Your Photo Booth Event",
-	"instructionLineText": "\u2191Look Here\u2191",
+{	"description": "Photo Booth Configuration",
+	"debug": true,
+	"configuration": {
+		"name": "Photobooth",
+		"outputFolderPath": "C:\\Apache24\\htdocs\\data\\images",
+		"IPaddress": "192.168.1.130",
+		"mirrorScreen": true,
+		"countDownStart": 3,
+		"fileType": "jpg",
+		"eventText": "Your Photo Booth Event",
+		"instructionLineText": "^Look Here^",
+	},
+	"display": {
+		"width": 1920,
+		"height": 1080,
+	},
     "camera": {
     	"name" : "HD Pro Webcam C920", 
         "width": 1920,
 		"height": 1080,
 		"fps": 30,
-		"pipeline": "pipeline: ksvideosrc device-index=0 ! image/jpeg, width=1920, height=1080, framerate=30/1 ! jpegdec ! videoconvert"
-    }
-  }
+		"orientation": "landscape",
+		"pipeline": "pipeline: ksvideosrc device-index=0 ! image/jpeg, width=1920, height=1080, framerate=30/1 ! jpegdec ! videoconvert",
+    },
+	"printer": {
+		"name": "Canon Selphy 1300",
+		"printWidth": 4.0,
+		"printHeight": 6.0,
+	}
 }
