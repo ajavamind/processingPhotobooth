@@ -90,7 +90,9 @@ void mousePressed() {
     lastKeyCode = KEYCODE_ENTER;
     if (DEBUG) println("mousePressed set lastKeyCode="+lastKeyCode);
   } else if (button == RIGHT) {
-    lastKeyCode = KEYCODE_SPACE;
+    lastKeyCode = KEYCODE_ESC;
+  } else if (button == CENTER) {
+    lastKeyCode = KEYCODE_C;  // collage
   }
 }
 
@@ -108,7 +110,7 @@ void keyPressed() {
     //    return;
   } else if (key == 65535 && keyCode == 0) { // special case all other keys
     key = 0;
-    keyCode = KEYCODE_4;  // use collage mode
+    keyCode = KEYCODE_C;  // use collage mode
   }
   lastKey = key;
   lastKeyCode = keyCode;
@@ -121,49 +123,46 @@ int keyUpdate() {
   int cmd = NOP;  // return code
 
   switch(lastKeyCode) {
-  case KEYCODE_ESC:
-    if (DEBUG) println("ESC exit");
+  case KEYCODE_Q:
+    if (DEBUG) println("Exit Program");
     if (cam != null) {
       cam.stop();
       cam.dispose();
     }
     exit();
     break;
-  case KEYCODE_1:
   case KEYCODE_ENTER:
-    if (numberOfPanels == 1) {
-      if (!photoBoothController.isPhotoShoot) {
-        photoBoothController.tryPhotoShoot();
-      }
-    } else {
-      setPhoto();
+    preview = PREVIEW_OFF;
+    if (!photoBoothController.isPhotoShoot) {
+      photoBoothController.tryPhotoShoot();
     }
     cmd = ENTER;
     break;
-  case LEFT:
-    photoBoothController.previousFilter();
-    break;
-  case RIGHT:
-    photoBoothController.nextFilter();
+    // 3D camera adjust parallax
+  case KEYCODE_0:
+  case KEYCODE_1:
+  case KEYCODE_2:
+  case KEYCODE_3:
+  case KEYCODE_4:
+  case KEYCODE_5:
+  case KEYCODE_6:
+  case KEYCODE_7:
+  case KEYCODE_8:
+  case KEYCODE_9:
+    int index = lastKeyCode-KEYCODE_0;
+    photoBoothController.setFilter(index);
     break;
   case KEYCODE_M:  // mirror view
     mirror = !mirror;
     if (DEBUG) println("mirror="+mirror);
     break;
-  case KEYCODE_2:  // for 3D stereo not implemented
-    if (numberOfPanels == 2) break;
-    numberOfPanels = 2;
-    background(0);
-    photoBoothController.updatePanelSize();
+  case KEYCODE_C:
+    preview = PREVIEW_OFF;
+    set2x2Photo();
     break;
-  case KEYCODE_4:
-    if (numberOfPanels == 4) {
-      if (!photoBoothController.isPhotoShoot) {
-        photoBoothController.tryPhotoShoot();
-      }
-    } else {
-      setCollage();
-    }
+  case KEYCODE_S:
+    preview = PREVIEW_OFF;
+    setSinglePhoto();
     break;
   case KEYCODE_P:  // portrait orientation
     orientation = PORTRAIT;
@@ -173,16 +172,32 @@ int keyUpdate() {
     orientation = LANDSCAPE;
     if (DEBUG) println("orientation="+(orientation==LANDSCAPE? "Landscape":"Portrait"));
     break;
-  case KEYCODE_O:  // display orientation
-    if (DEBUG) println("mirror="+mirror + " orientation="+(orientation==LANDSCAPE? "Landscape":"Portrait"));
+  case KEYCODE_TAB:
+    preview = PREVIEW_OFF;
+    showLegend = ! showLegend;
+    if (DEBUG) println("preview=OFF "+preview);
     break;
   case KEYCODE_SPACE:
-    // preview last photo or collage
-    preview = !preview;
+    // Immediate capture not countdown
+    photoBoothController.noCountDown = true;
+    preview = PREVIEW_OFF;
+    if (!photoBoothController.isPhotoShoot) {
+      photoBoothController.tryPhotoShoot();
+    }
+    cmd = ENTER;
+    break;
+  case KEYCODE_ESC:
+    // toggle preview last photo or collage
+    preview++;
+    if (preview >= PREVIEW_END) {
+      preview = PREVIEW_OFF;
+    } 
     if (DEBUG) println("preview="+preview);
     break;
-  case KEYCODE_D: // toggle DEBUG
-    DEBUG = !DEBUG;
+  case KEYCODE_D: // toggle DEBUG, output debug information to the console
+    //DEBUG = !DEBUG;
+    if (DEBUG) println("mirror="+mirror);
+    if (DEBUG) println("orientation="+(orientation==LANDSCAPE? "Landscape":"Portrait"));
     break;
   default:
     break;
@@ -193,14 +208,26 @@ int keyUpdate() {
   return cmd;
 }
 
-void setPhoto() {
-  numberOfPanels = 1;
-  background(0);
-  photoBoothController.updatePanelSize();
+// Single Photo mode
+boolean setSinglePhoto() {
+  boolean changed = false;
+  if (numberOfPanels != 1) {
+    numberOfPanels = 1;
+    background(0);
+    photoBoothController.updatePanelSize();
+    changed = true;
+  }
+  return changed;
 }
 
-void setCollage() {
-  numberOfPanels = 4;
-  background(0);
-  photoBoothController.updatePanelSize();
+// Collage 2x2 Photo mode
+boolean set2x2Photo() {
+  boolean changed = false;
+  if (numberOfPanels != 4) {
+    numberOfPanels = 4;
+    background(0);
+    photoBoothController.updatePanelSize();
+    changed = true;
+  }
+  return changed;
 }

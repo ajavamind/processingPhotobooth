@@ -2,14 +2,15 @@ private final static int JAVA_MODE = 0;
 private final static int ANDROID_MODE = 1;
 int buildMode = JAVA_MODE;
 
-String VERSION = "1.0";
-
 int screenWidth = 1920; // default
 int screenHeight = 1080;  // default
+float screenAspectRatio;
 int dividerSize = 10; // 2x2 photo collage layout divider line width
 
 int cameraWidth = 1920;
 int cameraHeight = 1080;
+float cameraAspectRatio;
+
 String eventText;
 String instructionLineText;
 String titleText="Photo Booth";
@@ -33,21 +34,16 @@ String PIPELINE_UVC = "pipeline: ksvideosrc device-index=0 ! image/jpeg ! jpegde
 String PIPELINE_BRIO = "pipeline: ksvideosrc device-index=0 ! image/jpeg, width=3840, height=2160, framerate=30/1 ! jpegdec ! videoconvert";
 String pipeline = PIPELINE_BRIO; // default
 
-// Photo Booth Modes
-private static final int PHOTO_MODE = 1;
-private static final int STEREO3D_MODE = 2;  // TO DO
-int mode = PHOTO_MODE;
-
 String cameraOrientation;
 int orientation = LANDSCAPE;
 //int orientation = PORTRAIT;
+
 float printWidth;
 float printHeight;
 float printAspectRatio = 4.0/6.0;  // default 4x6 inch print portrait orientation
 
 int numberOfPanels = 1;
 boolean mirror = false;  // mirror screen by horizontal flip
-boolean DEBUG = false;
 int countdownStart = 3;  // seconds
 String ipAddress;  // photo booth computer IP Address
 JSONObject configFile;
@@ -65,10 +61,15 @@ void initConfig() {
 }
 
 void readConfig() {
-  //configFile = loadJSONObject(sketchPath()+File.separator+"config"+File.separator+"config.json");
-  configFile = loadJSONObject(sketchPath("config")+File.separator+"config.json");
+  String filenamePath = sketchPath()+File.separator+"config"+File.separator+"my_config.json";
+  if (!fileExists(filenamePath)) {
+    filenamePath = sketchPath()+File.separator+"config"+File.separator+"config.json"; // default for development code test
+  }
+  configFile = loadJSONObject(filenamePath);
+  //configFile = loadJSONObject("config.json");
+  //configFile = loadJSONObject(sketchPath("config")+File.separator+"config.json");
   configuration = configFile.getJSONObject("configuration");
-  DEBUG = configFile.getBoolean("debug");
+  //DEBUG = configFile.getBoolean("debug");
   mirror = configuration.getBoolean("mirrorScreen");
   countdownStart = configuration.getInt("countDownStart");
   fileType = configuration.getString("fileType");
@@ -82,10 +83,13 @@ void readConfig() {
     screenWidth = display.getInt("width");
     screenHeight = display.getInt("height");
   }
+  screenAspectRatio = (float)screenWidth/(float)screenHeight;
   camera = configFile.getJSONObject("camera");
   cameraName = camera.getString("name");
   cameraWidth = camera.getInt("width");
   cameraHeight = camera.getInt("height");
+  cameraAspectRatio = (float) cameraWidth / (float) cameraHeight;
+  if (DEBUG) println("cameraWidth="+cameraWidth + " cameraHeight="+cameraHeight+ " cameraAspectRatio="+cameraAspectRatio);
   cameraOrientation = camera.getString("orientation");
   if (cameraOrientation != null && cameraOrientation.equals("landscape")) {
     orientation = LANDSCAPE;
@@ -93,12 +97,24 @@ void readConfig() {
     orientation = PORTRAIT;
   }
   pipeline = camera.getString("pipeline");
+  
+  
   if (DEBUG) println("configuration camera name="+cameraName+ " cameraWidth="+cameraWidth + " cameraHeight="+ cameraHeight);
   if (DEBUG) println("orientation="+(orientation==LANDSCAPE? "Landscape":"Portrait"));
+  if (DEBUG) println("mirror="+mirror);
   printer = configFile.getJSONObject("printer");
   if (printer != null) {
     printWidth = printer.getFloat("printWidth");
     printHeight = printer.getFloat("printHeight");
     printAspectRatio = printWidth/printHeight;
   }
+}
+
+boolean fileExists(String filenamePath) {
+  File newFile = new File (filenamePath);
+  if (newFile.exists()) {
+    if (DEBUG) println("File "+ filenamePath+ " exists");
+    return true;
+  }
+  return false;
 }

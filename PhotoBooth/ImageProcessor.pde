@@ -24,27 +24,28 @@ class ImageProcessor {
       output.filter(GRAY);
       break;
     case 2:
-      output.filter(THRESHOLD, 0.3);
+      output.filter(THRESHOLD, 0.5);
       break;
     case 3:
       output.filter(POSTERIZE, 13);
       break;
     case 4:
-      output.filter(POSTERIZE, 8);
+      output.filter(POSTERIZE, 8);  // best
       break;
     case 5:
       output.filter(POSTERIZE, 5);
       break;
-    case 6:
-      output.filter(POSTERIZE, 4);
-      break;
-    case 7:
-      output.filter(POSTERIZE, 3);
-      break;
-    case 8:
-      output.filter(POSTERIZE, 2);
-      break;
+    //case 6:
+    //  output.filter(POSTERIZE, 4);
+    //  break;
+    //case 7:
+    //  output.filter(POSTERIZE, 3);
+    //  break;
+    //case 8:
+    //  output.filter(POSTERIZE, 2);
+    //  break;
     default:
+      output.filter(0);  // None - needed to get image out of gStreamer
       break;
     }
     return output;

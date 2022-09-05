@@ -1,5 +1,6 @@
-// Modified for a webcam
+// Webcam Photobooth
 // Copyright 2022 Andy Modla
+// Uses Processing video library with 2.2.1 using GStreamer
 
 import processing.video.*;
 import java.text.SimpleDateFormat;
@@ -7,27 +8,41 @@ import java.util.Date;
 import java.util.Enumeration;
 import java.util.Locale;
 
+private static final boolean DEBUG = true;
+String VERSION = "1.1";
+
 Capture cam;
 PImage camImage;
-PImage[] collage;
 PFont font;
 int fontSize;
 int largeFontSize;
 PhotoBoothController photoBoothController;
 ImageProcessor imageProcessor;
-String RENDERER = JAVA2D;  // P2D; //
-boolean preview = false;
+//String RENDERER = JAVA2D;
+//String RENDERER = FX2D;
+String RENDERER = P2D;
 
-public void settings()
-{
-  initConfig();
-  size(screenWidth, screenHeight, RENDERER);
-}
+private static final int PREVIEW_OFF = -1;
+private static final int PREVIEW = 0;
+private static final int PREVIEW_END = 1;
+int preview = PREVIEW_OFF; // default no preview
+boolean showLegend = false;
+String[] legend;
+
+//public void settings()
+//{
+//  initConfig();
+//  size(screenWidth, screenHeight, RENDERER);
+//}
 
 public void setup() {
-  surface.setTitle(titleText);
+ // size(1920, 1080, RENDERER);  // debug
+  fullScreen(RENDERER);
+
+  initConfig();
   screenWidth = width;
   screenHeight = height;
+  //text("Checking for camera connection", 20, height/2);													
   if (DEBUG) println("screenWidth="+screenWidth+" screenHeight="+screenHeight);
   photoBoothController = new PhotoBoothController();
   frameRate(30);
@@ -45,7 +60,9 @@ public void setup() {
   }
   textSize(fontSize);
   largeFontSize = 6*fontSize;
-
+  
+  legend = loadStrings("keyLegend.txt");
+  
   if (OUTPUT_FOLDER_PATH.equals("output")) {  // default
     //OUTPUT_FOLDER_PATH = sketchPath() + File.separator + "output";
     OUTPUT_FOLDER_PATH = sketchPath("output");
@@ -96,40 +113,56 @@ public void setup() {
 
       //cam = new Capture(this, cameras[cameraIndex]);  // using default pipeline only captured low resolution of camera example 640x480 for HD Pro Webcam C920
       // pipeline for windows 10 - captures full HD 1920x1080 for HD Pro Webcam C920
-      cam = new Capture(this, cameraWidth, cameraHeight, pipeline);
-      if (DEBUG) println("PIPELINE="+pipeline);
+      //cam = new Capture(this, cameraWidth, cameraHeight, pipeline);
+      //if (DEBUG) println("PIPELINE="+pipeline);
+      cam = new Capture(this, cameraWidth, cameraHeight);
+      if (DEBUG) println("No pipeline set");
+
       cam.start();
+      cam.frameRate(30);
     }
   }
 
   noStroke();
-  //noCursor();
+  noCursor();
   background(0);
-  //drawDivider(numberOfPanels);
-  collage = new PImage[4];
+
   imageProcessor = new ImageProcessor();
 
   // force focus on window so that key input always works without a mouse
   if (buildMode == JAVA_MODE) {
-    if (RENDERER.equals(P2D) || RENDERER.equals(P3D)) {
-      ((com.jogamp.newt.opengl.GLWindow) surface.getNative()).requestFocus();  // for P2D
-    } else {
-      ((java.awt.Canvas) surface.getNative()).requestFocus();  // for JAVA2D (default)
+    try {
+      if (RENDERER.equals(P2D) || RENDERER.equals(P3D)) {
+        ((com.jogamp.newt.opengl.GLWindow) surface.getNative()).requestFocus();  // for P2D
+      } else if (RENDERER.equals(FX2D)) {
+      } else {
+        ((java.awt.Canvas) surface.getNative()).requestFocus();  // for JAVA2D (default)
+      }
+    }
+    catch (Exception ren) {
+      println("Renderer: "+RENDERER+ " Window focus exception: " + ren.toString());
     }
   }
+  surface.setTitle(titleText);
+  if (DEBUG) println("Renderer: "+RENDERER);
   if (DEBUG) println("finished setup()");
 }
 
 public void draw() {
   // process any inputs to steer operation drawing the display
   int command = keyUpdate(); // decode key inputs received on threads outside the draw thread loop
-
+  if (showLegend) {
+    background(0);
+    drawLegend();
+    return;
+  }
+  
   if (cam == null) {
     background(0);
     fill(255);
     text("No Cameras Available. ", 10, screenHeight/2);
     text("Check camera connection and other applications using the camera.", 10, screenHeight/2+screenHeight/16);
-    text("Press ESC Key or Mouse Left Button to Exit.", 10, screenHeight/2+ screenHeight/8);
+    text("Press Q Key to Exit.", 10, screenHeight/2+ screenHeight/8);
     if (command == ENTER) {
       exit();
     }
@@ -141,12 +174,12 @@ public void draw() {
   }
 
   if (!photoBoothController.endPhotoShoot) {
-    if (preview) {
+    if (preview != PREVIEW_OFF) {
       photoBoothController.drawLast();
     } else {
       photoBoothController.processImage(cam);
     }
-    drawText();
+    drawText();  //  TODO make PGraphic
     if (photoBoothController.isPhotoShoot) {
       photoBoothController.drawPhotoShoot();
     }
@@ -155,259 +188,57 @@ public void draw() {
   }
 }
 
-//void captureEvent(Capture c) {
+//void captureEvent(Capture cam) {
 //  cam.read();
 //}
 
+void drawLegend() {
+  int vertOffset = fontSize;
+  int horzOffset = 20;
+  for (int i=0; i<legend.length; i++) {
+    text(legend[i], horzOffset, vertOffset*(i+1));
+  }
+}
+
+// Draw instruction and event text on screen
 void drawText() {
-  float angleText;
-  float tw;
-  if (orientation == LANDSCAPE) {
-    pushMatrix();
-    tw = textWidth(instructionLineText);
-    translate(screenWidth/2- tw/2, screenHeight/24);
-    text(instructionLineText, 0, 0);
-    popMatrix();
-
-    pushMatrix();
-    tw = textWidth(eventText);
-    translate(screenWidth/2- tw/2, screenHeight-screenHeight/32);
-    text(eventText, 0, 0);
-    popMatrix();
-  } else {
-    angleText = radians(270);
-    tw = textWidth(instructionLineText);
-    pushMatrix();
-    translate(screenWidth/32, screenHeight/2+tw/2);
-    rotate(angleText);
-    text(instructionLineText, 0, 0);
-    popMatrix();
-
-    tw = textWidth(eventText);
-    pushMatrix();
-    translate(screenWidth-screenWidth/32, screenHeight/2+tw/2);
-    rotate(angleText);
-    text(eventText, 0, 0);
-    popMatrix();
-  }
-}
-
-//void drawDivider(int numberOfPanels) {
-//  fill(255);
-//  if (numberOfPanels == 4) {
-//    rect(0, screenHeight/2, screenWidth, dividerSize);
-//    rect(screenWidth/2, 0, dividerSize, screenHeight);
-//  } else if (numberOfPanels == 2) {
-//    rect(screenWidth/2, 0, dividerSize, screenHeight);
-//  } else {
-//    // one panel assumed
-//  }
-//}
-
-// mask screen for 16/9 display 1920x1080 pixels to 6x4 print 1620x1080 pixels
-void drawMask() {
-  fill(0);
-  rect(0, 0, 150, 1080);
-  rect(1770, 0, 150, 1080);
-  fill(255);
-}
-
-// draw mask for screen to match print image aspect ratio
-// 4x6 print aspect ratio
-void drawMaskForScreen( float printAspectRatio) {
-  float x = 0;
-  float y = 0;
-  float w = (screenWidth-(screenHeight/printAspectRatio))/2.0;
-  float h = screenHeight;
-  fill(0);
-  rect(x, y, w, h);  // left side
-  rect(screenWidth-w, y, w, h);  // right side
-  fill(255);
-
-  // check for collage mode
-  if (numberOfPanels == 4) {
-    // draw collage position and count
-    float angleText = 0;
+  if (preview == PREVIEW_OFF) {
+    float angleText;
     float tw;
-    noFill();
-    stroke(255);
-    float xt = 0;
-    float yt = 0;
-    pushMatrix();
     if (orientation == LANDSCAPE) {
-      xt = screenWidth-w;
-      yt = w/2;
+      pushMatrix();
+      tw = textWidth(instructionLineText);
+      translate(screenWidth/2- tw/2, screenHeight/24);
+      text(instructionLineText, 0, 0);
+      popMatrix();
+
+      pushMatrix();
+      tw = textWidth(eventText);
+      translate(screenWidth/2- tw/2, screenHeight-screenHeight/32);
+      text(eventText, 0, 0);
+      popMatrix();
     } else {
-      xt = w/2;
-      yt = w-w/4;
       angleText = radians(270);
+      tw = textWidth(instructionLineText);
+      pushMatrix();
+      translate(screenWidth/32, screenHeight/2+tw/2);
+      rotate(angleText);
+      text(instructionLineText, 0, 0);
+      popMatrix();
+
+      tw = textWidth(eventText);
+      pushMatrix();
+      translate(screenWidth-screenWidth/32, screenHeight/2+tw/2);
+      rotate(angleText);
+      text(eventText, 0, 0);
+      popMatrix();
     }
-    translate(xt, yt);
-    rotate(angleText);
-    text(" "+str(photoBoothController.currentState+1)+"/"+str(numberOfPanels), 0, 0);
-    popMatrix();
-
-    // drawing collage matrix
-    strokeWeight(4);
-    if (orientation == LANDSCAPE) {
-      rect(0, 0, w, w);  // square
-      fill(255);
-      rect(0, w/2, w, 2); // horizontal line
-      rect(w/2, 0, 2, w);  // vertical line
-      switch(photoBoothController.currentState) {
-      case 0:
-        circle(w/4, w/2-w/4, w/4);
-        break;
-      case 1:
-        circle(w/4+w/2, w/2-w/4, w/4);
-        break;
-      case 2:
-        circle(w/4, w/2+w/4, w/4);
-        break;
-      case 3:
-        circle(w/4+w/2, w/2+w/4, w/4);
-        break;
-      }
-    } else {
-      rect(0, h-w, w, w);  // square
-      fill(255);
-      rect(0, h-w/2, w, 2); // horizontal line
-      rect(w/2, h-w, 2, w);  // vertical line
-      switch(photoBoothController.currentState) {
-      case 1:
-        circle(w/4, h-w/2-w/4, w/4);
-        break;
-      case 3:
-        circle(w/4+w/2, h-w/2-w/4, w/4);
-        break;
-      case 0:
-        circle(w/4, h-w/2+w/4, w/4);
-        break;
-      case 2:
-        circle(w/4+w/2, h-w/2+w/4, w/4);
-        break;
-      }
-    }
-  }
-}
-
-// crop for printing
-PImage cropForPrint(PImage src, float printAspectRatio) {
-  if (DEBUG) println("cropForPrint "+printAspectRatio);
-  float bw = (cameraWidth-(cameraHeight/printAspectRatio))/2.0;
-  int sx = int(bw);
-  int sy = 0;
-  int sw = cameraWidth-int(2*bw);
-  int sh = cameraHeight;
-  int dx = 0;
-  int dy = 0;
-  int dw = sw;
-  int dh = cameraHeight;
-  PImage img = createImage(dw, dh, RGB);
-  img.copy(src, sx, sy, sw, sh, dx, dy, dw, dh);  // cropped copy
-  if (mirror) {
-    PGraphics pg;
-    pg = createGraphics(dw, dh);
-    pg.beginDraw();
-    pg.background(0);
-    pg.pushMatrix();
-    pg.scale(-1, 1);
-    pg.image(img, -dw, 0, dw, dh);  // horizontal flip
-    pg.popMatrix();
-    pg.endDraw();
-    img = pg.copy();
-    pg.dispose();
-  }
-  return img;
-}
-
-// Save all images array
-//void saveImages(PImage[] images, String outputFolderPath, String outputFilename, String suffix, String filetype) {
-//  for (int i=0; i<numberOfPanels; i++) {
-//    // original camera photo
-//    //images[i].save(outputFolderPath + File.separator + outputFilename + suffix +"_"+ number(i+1) + "." + filetype);
-//    // crop and save
-//    images[i] = cropForPrint(images[i], printAspectRatio);
-//    images[i].save(outputFolderPath + File.separator + outputFilename + suffix +"_"+ number(i+1) + "_cr"+ "." + filetype);
-//  }
-//}
-
-// Save image
-void saveImage(PImage img, int index, String outputFolderPath, String outputFilename, String suffix, String filetype) {
-  // crop and save
-  collage[index] = cropForPrint(img, printAspectRatio);
-  String filename = outputFolderPath + File.separator + outputFilename + suffix +"_"+ number(index+1) + "_cr"+ "." + filetype;
-  collage[index].save(filename);
-  if (orientation == PORTRAIT) {
-    setEXIF(filename);
   }
 }
 
 // Save image of the composite screen
 void saveScreen(String outputFolderPath, String outputFilename, String suffix, String filetype) {
   save(outputFolderPath + File.separator + outputFilename + suffix + "." + filetype);
-}
-
-// Save composite collage from original photos
-// images input already cropped
-PGraphics saveCollage(String outputFolderPath, String outputFilename, String suffix, String filetype) {
-  PGraphics pg;
-  int w = int(cameraHeight/printAspectRatio);
-  int h = cameraHeight;
-  pg = createGraphics(2*w, 2*h);
-  pg.beginDraw();
-  pg.background(0);
-  pg.fill(255);
-  // build collage
-  if (orientation == LANDSCAPE) {
-    for (int i=0; i<numberOfPanels; i++) {
-      switch (i) {
-      case 0:
-        pg.image(collage[i], 0, 0, w, h);
-        break;
-      case 1:
-        pg.image(collage[i], w, 0, w, h);
-        break;
-      case 2:
-        pg.image(collage[i], 0, h, w, h);
-        break;
-      case 3:
-        pg.image(collage[i], w, h, w, h);
-        break;
-      default:
-        break;
-      }
-    }
-  } else { // portrait
-    for (int i=0; i<numberOfPanels; i++) {
-      switch (i) {
-      case 1:
-        pg.image(collage[i], 0, 0, w, h);
-        break;
-      case 3:
-        pg.image(collage[i], w, 0, w, h);
-        break;
-      case 0:
-        pg.image(collage[i], 0, h, w, h);
-        break;
-      case 2:
-        pg.image(collage[i], w, h, w, h);
-        break;
-      default:
-        break;
-      }
-    }
-  }
-  // draw dividers
-  pg.rect(0, h-dividerSize/2, 2*w, dividerSize);
-  pg.rect(w-dividerSize/2, 0, dividerSize, 2*h);
-  pg.endDraw();
-  String filename = outputFolderPath + File.separator + outputFilename + suffix + "_" + number(5) + "_cr"+ "." + filetype;
-  pg.save(filename);
-  if (orientation == PORTRAIT) {
-    setEXIF(filename);
-  }
-  return pg;
 }
 
 String getDateTime() {

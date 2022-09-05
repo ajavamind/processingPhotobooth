@@ -1,0 +1,22 @@
+Key Legend
+
+TAB - toggles legend on/off
+ESC or right mouse button  - toggles preview of the last capture
+Enter or left mouse button - capture
+S - Single photo mode
+C or center mouse button - Collage photo mode
+Q - Exit Photobooth
+Space Bar - immediate capture no countdown
+
+Image Filters:
+0 - No Filter
+1 - Grayscale
+2 - Level threshold 0.5
+3 - Posterize 13
+4 - Posterize 8
+5 - Posterize 5
+DEBUG:
+M - Mirror toggle
+P - Portrait mode
+L - Landscape mode
+D - Debug information to the console
