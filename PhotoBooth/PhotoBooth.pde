@@ -1,6 +1,6 @@
 // Webcam Photobooth
 // Copyright 2022 Andy Modla
-// Uses Processing video library with 2.2.1 using GStreamer
+// Uses Processing video library with GStreamer version 2.2.1
 
 import processing.video.*;
 import java.text.SimpleDateFormat;
@@ -9,7 +9,7 @@ import java.util.Enumeration;
 import java.util.Locale;
 
 private static final boolean DEBUG = true;
-String VERSION = "1.1";
+String VERSION = "1.2";
 
 Capture cam;
 PImage camImage;
@@ -36,7 +36,7 @@ String[] legend;
 //}
 
 public void setup() {
- // size(1920, 1080, RENDERER);  // debug
+  // size(1920, 1080, RENDERER);  // debug
   fullScreen(RENDERER);
 
   initConfig();
@@ -60,9 +60,9 @@ public void setup() {
   }
   textSize(fontSize);
   largeFontSize = 6*fontSize;
-  
+
   legend = loadStrings("keyLegend.txt");
-  
+
   if (OUTPUT_FOLDER_PATH.equals("output")) {  // default
     //OUTPUT_FOLDER_PATH = sketchPath() + File.separator + "output";
     OUTPUT_FOLDER_PATH = sketchPath("output");
@@ -116,10 +116,9 @@ public void setup() {
       //cam = new Capture(this, cameraWidth, cameraHeight, pipeline);
       //if (DEBUG) println("PIPELINE="+pipeline);
       cam = new Capture(this, cameraWidth, cameraHeight);
-      if (DEBUG) println("No pipeline set");
+      if (DEBUG) println("Not using pipeline set");
 
       cam.start();
-      cam.frameRate(30);
     }
   }
 
@@ -156,7 +155,7 @@ public void draw() {
     drawLegend();
     return;
   }
-  
+
   if (cam == null) {
     background(0);
     fill(255);
@@ -171,31 +170,30 @@ public void draw() {
 
   if (cam.available() == true) {
     cam.read();
-  }
 
-  if (!photoBoothController.endPhotoShoot) {
-    if (preview != PREVIEW_OFF) {
-      photoBoothController.drawLast();
-    } else {
-      photoBoothController.processImage(cam);
+    if (!photoBoothController.endPhotoShoot) {
+      if (preview != PREVIEW_OFF) {
+        photoBoothController.drawLast();
+      } else {
+        photoBoothController.processImage(cam);
+      }
+      drawText();  //  TODO make PGraphic
+      if (photoBoothController.isPhotoShoot) {
+        photoBoothController.drawPhotoShoot();
+      }
+    } else {  // show result
+      photoBoothController.oldShoot();
     }
-    drawText();  //  TODO make PGraphic
-    if (photoBoothController.isPhotoShoot) {
-      photoBoothController.drawPhotoShoot();
-    }
-  } else {  // show result
-    photoBoothController.oldShoot();
   }
 }
-
-//void captureEvent(Capture cam) {
-//  cam.read();
-//}
 
 void drawLegend() {
   int vertOffset = fontSize;
   int horzOffset = 20;
   for (int i=0; i<legend.length; i++) {
+    if (i==0) {
+      text(legend[i] + " Version: "+ VERSION, horzOffset, vertOffset*(i+1));
+    }
     text(legend[i], horzOffset, vertOffset*(i+1));
   }
 }

@@ -2,15 +2,15 @@ class PhotoBoothController {
   int currentState;
   PImage[] images;
   PImage currentImage;
-  PImage[] collage;
+  PImage[] collage; // print aspect ratio
   PImage collage2x2;
   String datetime;
 
   boolean isPhotoShoot, endPhotoShoot;
   volatile int startPhotoShoot;
   volatile boolean noCountDown = false;
-  int photoDelay = 20;
-  int oldShootTimeout = 100;
+  int photoDelay = 60;
+  int oldShootTimeout = 60;
   int oldShoot = 0;
 
   int MAX_PANELS = 4;
@@ -279,6 +279,7 @@ class PhotoBoothController {
 
   public boolean incrementState() {
     boolean done = false;
+    currentImage.loadPixels();
     images[currentState] = currentImage.get();
     if (currentState == 0) {
       datetime = getDateTime();
