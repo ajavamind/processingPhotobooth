@@ -151,6 +151,7 @@ int keyUpdate() {
   case KEYCODE_9:
     int index = lastKeyCode-KEYCODE_0;
     photoBoothController.setFilter(index);
+    if (DEBUG) println("setFilter="+photoBoothController.getFilter());
     break;
   case KEYCODE_M:  // mirror view
     mirror = !mirror;

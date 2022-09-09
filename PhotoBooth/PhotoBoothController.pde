@@ -230,15 +230,15 @@ class PhotoBoothController {
   }
 
   void drawCollage(PImage img) {
-      if (img != null) {
-        //float bw = (cameraWidth-(cameraHeight/printAspectRatio))/2.0;
-        float bw = (screenWidth-(screenHeight/printAspectRatio))/2.0;
-        int sx = int(bw);
-        //image(collage2x2, sx/2, 0, collage2x2.width/4, collage2x2.height/4);
-        image(img, sx, 0, img.width/(2*cameraHeight/screenHeight), img.height/(2*cameraHeight/screenHeight));
-      }
+    if (img != null) {
+      //float bw = (cameraWidth-(cameraHeight/printAspectRatio))/2.0;
+      float bw = (screenWidth-(screenHeight/printAspectRatio))/2.0;
+      int sx = int(bw);
+      //image(collage2x2, sx/2, 0, collage2x2.width/4, collage2x2.height/4);
+      image(img, sx, 0, img.width/(2*cameraHeight/screenHeight), img.height/(2*cameraHeight/screenHeight));
+    }
   }
-  
+
   int getCountDownDigit(int initial) {
     int cdd = -1;
     int aDelay = photoDelay/4;
@@ -264,22 +264,19 @@ class PhotoBoothController {
     return cdd;
   }
 
-  public void nextFilter() {
-    imageProcessor.filterNum = (imageProcessor.filterNum+1)%filters.length;
-  }
-  public void previousFilter() {
-    imageProcessor.filterNum--;
-    if (imageProcessor.filterNum < 0) {
-      imageProcessor.filterNum = filters.length-1;
-    }
-  }
   public void setFilter(int num) {
     imageProcessor.filterNum = num;
   }
 
+  public int getFilter() {
+    return imageProcessor.filterNum;
+  }
+
   public boolean incrementState() {
     boolean done = false;
-    currentImage.loadPixels();
+    if (imageProcessor.filterNum == 0) {
+      currentImage.loadPixels();
+    }
     images[currentState] = currentImage.get();
     if (currentState == 0) {
       datetime = getDateTime();

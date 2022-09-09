@@ -1,6 +1,6 @@
 // Webcam Photobooth
 // Copyright 2022 Andy Modla
-// Uses Processing video library with GStreamer version 2.2.1
+// Uses Processing video library version 2.2.1 with GStreamer version 1.20.3
 
 import processing.video.*;
 import java.text.SimpleDateFormat;
@@ -171,7 +171,9 @@ public void draw() {
   if (cam.available() == true) {
     cam.read();
 
-    if (!photoBoothController.endPhotoShoot) {
+    if (photoBoothController.endPhotoShoot) { 
+      photoBoothController.oldShoot(); // show result
+    } else {
       if (preview != PREVIEW_OFF) {
         photoBoothController.drawLast();
       } else {
@@ -181,8 +183,6 @@ public void draw() {
       if (photoBoothController.isPhotoShoot) {
         photoBoothController.drawPhotoShoot();
       }
-    } else {  // show result
-      photoBoothController.oldShoot();
     }
   }
 }
