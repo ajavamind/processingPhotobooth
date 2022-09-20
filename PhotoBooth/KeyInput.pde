@@ -125,9 +125,9 @@ int keyUpdate() {
   switch(lastKeyCode) {
   case KEYCODE_Q:
     if (DEBUG) println("Exit Program");
-    if (cam != null) {
-      cam.stop();
-      cam.dispose();
+    if (video != null) {
+      video.stop();
+      video.dispose();
     }
     exit();
     break;

@@ -103,7 +103,7 @@ class PhotoBoothController {
   public void drawLast() {
     if (numberOfPanels == 1) {
       if (collage[0] != null) {
-        if (DEBUG) println("drawLast()");
+        //if (DEBUG) println("drawLast()");
         drawImage(collage[0], true);
       }
     } else {

@@ -10,9 +10,9 @@ import java.util.Enumeration;
 import java.util.Locale;
 
 private static final boolean DEBUG = true;
-String VERSION = "1.4";
+String VERSION = "1.4.1";
 
-Capture cam;
+Capture video;
 private final static int NUM_BUFFERS = 2;
 volatile PImage[] camImage = new PImage[NUM_BUFFERS];
 volatile int camIndex = 0;
@@ -24,8 +24,7 @@ int largeFontSize;
 PhotoBoothController photoBoothController;
 ImageProcessor imageProcessor;
 String RENDERER = JAVA2D;
-//String RENDERER = FX2D;
-//String RENDERER = P2D;
+//String RENDERER = P2D;  // a bug in video library prevents this render mode from working
 //String RENDERER = P3D;
 
 
@@ -35,12 +34,6 @@ private static final int PREVIEW_END = 1;
 int preview = PREVIEW_OFF; // default no preview
 boolean showLegend = false;
 String[] legend;
-
-//public void settings()
-//{
-//  initConfig();
-//  size(screenWidth, screenHeight, RENDERER);
-//}
 
 public void setup() {
   initConfig();
@@ -98,7 +91,7 @@ public void setup() {
 
   if (cameras == null || cameras.length == 0) {
     if (DEBUG) println("There are no cameras available for capture.");
-    cam = null;
+    video = null;
   } else {
     if (DEBUG) println("Available cameras:");
     camAvailable = true;
@@ -118,15 +111,15 @@ public void setup() {
     // default first camera found at index 0
     if (camAvailable) {
 
-      //cam = new Capture(this, cameras[cameraIndex]);  // using default pipeline only captured low resolution of camera example 640x480 for HD Pro Webcam C920
+      //video = new Capture(this, cameras[cameraIndex]);  // using default pipeline only captured low resolution of camera example 640x480 for HD Pro Webcam C920
       // pipeline for windows 10 - captures full HD 1920x1080 for HD Pro Webcam C920
 
-      //cam = new Capture(this, cameraWidth, cameraHeight, pipeline);
+      //video = new Capture(this, cameraWidth, cameraHeight, pipeline);
       //if (DEBUG) println("PIPELINE="+pipeline);
-      cam = new Capture(this, cameraWidth, cameraHeight, cameras[cameraIndex+cameraNumber]);
+      video= new Capture(this, cameraWidth, cameraHeight, cameras[cameraIndex+cameraNumber]);
       if (DEBUG) println("Not using pipeline set");
 
-      cam.start();
+      video.start();
     }
   }
 
@@ -141,7 +134,6 @@ public void setup() {
     try {
       if (RENDERER.equals(P2D) || RENDERER.equals(P3D)) {
         ((com.jogamp.newt.opengl.GLWindow) surface.getNative()).requestFocus();  // for P2D
-      } else if (RENDERER.equals(FX2D)) {
       } else {
         ((java.awt.Canvas) surface.getNative()).requestFocus();  // for JAVA2D (default)
       }
@@ -155,13 +147,21 @@ public void setup() {
   if (DEBUG) println("finished setup()");
 }
 
-void captureEvent(Capture c) {
-  c.read();
-  // buffer capture video frame
-  camImage[nextIndex] = c.copy();
+void captureEvent(Capture camera) {
+  camera.read();
+  // buffer captured video frame
+  if (RENDERER.equals(P2D) || RENDERER.equals(P3D)) {
+    PImage temp = createImage(camera.width, camera.height, RGB);
+    camera.loadPixels();
+    arrayCopy(camera.pixels, temp.pixels);
+    camImage[nextIndex] = temp;
+  } else {
+    camImage[nextIndex] = camera.copy();
+  }
+
   camIndex = nextIndex;
   nextIndex++;
-  nextIndex = nextIndex & 1;
+  nextIndex = nextIndex & 1; // alternating 2 buffers
 }
 
 public void draw() {
@@ -173,7 +173,7 @@ public void draw() {
     return;
   }
 
-  if (cam == null) {
+  if (video == null) {
     background(0);
     fill(255);
     text("No Cameras Available. ", 10, screenHeight/2);
@@ -271,7 +271,7 @@ void setEXIF(String filename) {
 
 void stop() {
   if (DEBUG) println("stop");
-  cam.stop();
+  video.stop();
   super.stop();
 }
 
