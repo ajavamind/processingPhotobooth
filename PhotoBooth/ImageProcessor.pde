@@ -1,4 +1,5 @@
-
+// Apply filters to the live view
+// Processing filters available are:
 String[] filters = {"NONE", "THRESHOLD", "GRAY", "OPAQUE", "INVERT", "POSTERIZE", "BLUR", "ERODE", "DILATE"};
 
 class ImageProcessor {
@@ -6,71 +7,104 @@ class ImageProcessor {
 
   // broken mirror filter parameters
   // Size of each cell in the grid
-  int cellSize = 20;
-  // Number of columns and rows in our system
+  int cellSize = 40;
+  // Number of columns and rows for mirror
   int cols, rows;
 
   public ImageProcessor() {
     filterNum = 0;
-    cols = width / cellSize;
-    rows = height / cellSize;
     colorMode(RGB, 255, 255, 255, 100);
   }
 
-  public PImage processImage(Capture input) {
-    PImage output = null;
-    output = input;
-    //output.loadPixels();
-    //output.updatePixels();
-      
-    //if (DEBUG) println("Filter: "+filters[filterNum]);
+  public PImage processImage(PImage temp) {
     switch (filterNum) {
     case 0:
+      //temp.filter(0);
       break;
     case 1:
-      output.filter(GRAY);
+      temp.filter(GRAY);
       break;
     case 2:
-      output.filter(THRESHOLD, 0.5);
+      temp.filter(THRESHOLD, 0.5);
       break;
     case 3:
-      output.filter(POSTERIZE, 13);
+      temp.filter(POSTERIZE, 13);
       break;
     case 4:
-      output.filter(POSTERIZE, 8);  // best
+      temp.filter(POSTERIZE, 8);  // best
       break;
     case 5:
-      output.filter(POSTERIZE, 5);
+      temp.filter(POSTERIZE, 5);
       break;
-      //case 6:
-      //  output.filter(POSTERIZE, 4);
-      //  break;
-      //case 7:
-      //  output.filter(POSTERIZE, 3);
-      //  break;
-      case 8:
-        output = mirror(output);
-        break;
+    case 6:
+      temp.filter(POSTERIZE, 4);
+      break;
+    case 7:
+      temp.filter(POSTERIZE, 3);
+      break;
+    case 8:
+      temp = mirror(temp);
+      break;
     default:
+      //temp.filter(0);
       break;
     }
-    return output;
+    return temp;
   }
 
+  //public PImage processImageAlt(Capture input) {
+  //  PImage temp = input;
+
+  //  switch (filterNum) {
+  //  case 0:
+  //    temp.filter(0);
+  //    break;
+  //  case 1:
+  //    temp.filter(GRAY);
+  //    break;
+  //  case 2:
+  //    temp.filter(THRESHOLD, 0.5);
+  //    break;
+  //  case 3:
+  //    temp.filter(POSTERIZE, 13);
+  //    break;
+  //  case 4:
+  //    temp.filter(POSTERIZE, 8);  // best
+  //    break;
+  //  case 5:
+  //    temp.filter(POSTERIZE, 5);
+  //    break;
+  //  case 6:
+  //    temp.filter(POSTERIZE, 4);
+  //    break;
+  //  case 7:
+  //    temp.filter(POSTERIZE, 3);
+  //    break;
+  //  case 8:
+  //    temp = mirror(temp);
+  //    break;
+  //  default:
+  //    temp.filter(0);
+  //    break;
+  //  }
+  //  return temp;
+  //}
+
   /**
-   * Source Mirror example
+   * Mirror example for Processing 4
    * by Daniel Shiffman.
-   *
+   * Modified by Andy Modla
    * Each pixel from the video source is drawn as a rectangle with rotation based on brightness.
    */
-  // Experimental
   private PImage mirror(PImage img) {
+    cols = img.width / cellSize;
+    rows = img.height / cellSize;
     PGraphics pg;
     int length = img.width*img.height;
     img.loadPixels();
-    pg = createGraphics(img.width, img.height);
+    pg = createGraphics(img.width, img.height, RENDERER);
     pg.beginDraw();
-
+    pg.background(255);
     // Begin loop for columns
     for (int i = 0; i < cols; i++) {
       // Begin loop for rows
@@ -89,7 +123,7 @@ class ImageProcessor {
 
         // Code for drawing a single rect
         // Using translate in order for rotation to work properly
-        pushMatrix();
+        pg.pushMatrix();
         pg.translate(x+cellSize/2, y+cellSize/2);
         // Rotation formula based on brightness
         pg.rotate((2 * PI * brightness(c) / 255.0));
@@ -98,10 +132,11 @@ class ImageProcessor {
         pg.noStroke();
         // Rects are larger than the cell for some overlap
         pg.rect(0, 0, cellSize+6, cellSize+6);
-        popMatrix();
+        pg.popMatrix();
       }
     }
     pg.endDraw();
-    return pg.copy();
+    PImage temp = pg.copy();
+    return temp;
   }
 }

@@ -1,4 +1,4 @@
-// Keyboard input handling
+// Keyboard and Mouse input handling
 // These codes (ASCII) are for Java applications
 // Android codes (not implemented) differ with some keys
 

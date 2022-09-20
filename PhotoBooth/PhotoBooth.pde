@@ -1,5 +1,6 @@
 // Webcam Photobooth
 // Copyright 2022 Andy Modla
+// Build with Processing 4.0.1
 // Uses Processing video library version 2.2.1 with GStreamer version 1.20.3
 
 import processing.video.*;
@@ -9,18 +10,24 @@ import java.util.Enumeration;
 import java.util.Locale;
 
 private static final boolean DEBUG = true;
-String VERSION = "1.2";
+String VERSION = "1.4";
 
 Capture cam;
-PImage camImage;
+private final static int NUM_BUFFERS = 2;
+volatile PImage[] camImage = new PImage[NUM_BUFFERS];
+volatile int camIndex = 0;
+volatile int nextIndex = 1;
+
 PFont font;
 int fontSize;
 int largeFontSize;
 PhotoBoothController photoBoothController;
 ImageProcessor imageProcessor;
-//String RENDERER = JAVA2D;
+String RENDERER = JAVA2D;
 //String RENDERER = FX2D;
-String RENDERER = P2D;
+//String RENDERER = P2D;
+//String RENDERER = P3D;
+
 
 private static final int PREVIEW_OFF = -1;
 private static final int PREVIEW = 0;
@@ -36,16 +43,16 @@ String[] legend;
 //}
 
 public void setup() {
-  // size(1920, 1080, RENDERER);  // debug
-  fullScreen(RENDERER);
-
   initConfig();
+  fullScreen(RENDERER);
+  // size(1920, 1080, RENDERER);  // for debug
+
   screenWidth = width;
   screenHeight = height;
   //text("Checking for camera connection", 20, height/2);													
   if (DEBUG) println("screenWidth="+screenWidth+" screenHeight="+screenHeight);
   photoBoothController = new PhotoBoothController();
-  frameRate(30);
+  frameRate(60);
   smooth();
   font = loadFont("SansSerif-64.vlw");
   textFont(font);
@@ -102,7 +109,7 @@ public void setup() {
       }
     }
 
-    if (DEBUG) println("Using Camera: "+cameras[cameraIndex]);
+    if (DEBUG) println("Using Camera: "+cameras[cameraIndex+cameraNumber]);
 
     // replace index number in PIPELINE
     pipeline = pipeline.replaceFirst("device-index=0", "device-index="+str(cameraIndex));
@@ -113,9 +120,10 @@ public void setup() {
 
       //cam = new Capture(this, cameras[cameraIndex]);  // using default pipeline only captured low resolution of camera example 640x480 for HD Pro Webcam C920
       // pipeline for windows 10 - captures full HD 1920x1080 for HD Pro Webcam C920
+
       //cam = new Capture(this, cameraWidth, cameraHeight, pipeline);
       //if (DEBUG) println("PIPELINE="+pipeline);
-      cam = new Capture(this, cameraWidth, cameraHeight);
+      cam = new Capture(this, cameraWidth, cameraHeight, cameras[cameraIndex+cameraNumber]);
       if (DEBUG) println("Not using pipeline set");
 
       cam.start();
@@ -147,6 +155,15 @@ public void setup() {
   if (DEBUG) println("finished setup()");
 }
 
+void captureEvent(Capture c) {
+  c.read();
+  // buffer capture video frame
+  camImage[nextIndex] = c.copy();
+  camIndex = nextIndex;
+  nextIndex++;
+  nextIndex = nextIndex & 1;
+}
+
 public void draw() {
   // process any inputs to steer operation drawing the display
   int command = keyUpdate(); // decode key inputs received on threads outside the draw thread loop
@@ -160,7 +177,7 @@ public void draw() {
     background(0);
     fill(255);
     text("No Cameras Available. ", 10, screenHeight/2);
-    text("Check camera connection and other applications using the camera.", 10, screenHeight/2+screenHeight/16);
+    text("Check camera connection or other applications using the camera.", 10, screenHeight/2+screenHeight/16);
     text("Press Q Key to Exit.", 10, screenHeight/2+ screenHeight/8);
     if (command == ENTER) {
       exit();
@@ -168,21 +185,17 @@ public void draw() {
     return;
   }
 
-  if (cam.available() == true) {
-    cam.read();
-
-    if (photoBoothController.endPhotoShoot) { 
-      photoBoothController.oldShoot(); // show result
+  if (photoBoothController.endPhotoShoot) {
+    photoBoothController.oldShoot(); // show result
+  } else {
+    if (preview != PREVIEW_OFF) {
+      photoBoothController.drawLast();
     } else {
-      if (preview != PREVIEW_OFF) {
-        photoBoothController.drawLast();
-      } else {
-        photoBoothController.processImage(cam);
-      }
-      drawText();  //  TODO make PGraphic
-      if (photoBoothController.isPhotoShoot) {
-        photoBoothController.drawPhotoShoot();
-      }
+      photoBoothController.processImage(camImage[camIndex]);
+    }
+    drawText();  //  TODO make PGraphic
+    if (photoBoothController.isPhotoShoot) {
+      photoBoothController.drawPhotoShoot();
     }
   }
 }
@@ -262,6 +275,7 @@ void stop() {
   super.stop();
 }
 
+// Add leading zeroes to number
 String number(int index) {
   // fix size of index number at 4 characters long
   if (index == 0)

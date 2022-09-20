@@ -2,7 +2,7 @@
 	"debug": true,
 	"configuration": {
 		"name": "Photobooth",
-		"outputFolderPath": "C:\\Apache24\\htdocs\\data\\images",
+		"outputFolderPath": "/output",
 		"IPaddress": "192.168.1.130",
 		"mirrorScreen": true,
 		"countDownStart": 3,
@@ -16,10 +16,12 @@
 	},
     "camera": {
     	"name": "Logitech BRIO", 
+		"numberDescription": "number index variation for the camera being used, 0 relative first",
+		"number": 0,
         "width": 3840,
 		"height": 2160,
 		"fps": 30,
-		"orientation": "portrait",
+		"orientation": "landscape",
 		"pipeline": "pipeline: ksvideosrc device-index=0 ! image/jpeg,width=3840,height=2160,framerate=30/1 ! jpegdec ! videoconvert",
     },
 	"printer": {

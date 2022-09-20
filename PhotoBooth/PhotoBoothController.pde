@@ -1,7 +1,8 @@
 class PhotoBoothController {
   int currentState;
   PImage[] images;
-  PImage currentImage;
+  volatile PImage currentImage;
+  volatile PImage currentRawImage;
   PImage[] collage; // print aspect ratio
   PImage collage2x2;
   String datetime;
@@ -9,7 +10,7 @@ class PhotoBoothController {
   boolean isPhotoShoot, endPhotoShoot;
   volatile int startPhotoShoot;
   volatile boolean noCountDown = false;
-  int photoDelay = 60;
+  int photoDelay = 20;
   int oldShootTimeout = 60;
   int oldShoot = 0;
 
@@ -58,7 +59,7 @@ class PhotoBoothController {
   private void drawImage(PImage input, boolean preview) {
     float h = screenHeight;
     float w = ((float)screenHeight/printAspectRatio);
-    ;
+
     if (preview) {
       background(0);
       if (orientation == LANDSCAPE) {
@@ -123,11 +124,20 @@ class PhotoBoothController {
     oldShoot++;
   }
 
-  public void processImage(Capture input) {
+  public void processImage(PImage input) {
+    if (input == null) return;
+    if (imageProcessor.filterNum > 0) currentRawImage = input.get();
     currentImage = imageProcessor.processImage(input);
     drawImage(currentImage, false);
     drawMaskForScreen(printAspectRatio);
   }
+
+  //public void processImageAlt(Capture input) {
+  //  PImage temp = input;
+  //  currentImage = imageProcessor.processImage(temp);
+  //  drawImage(currentImage, false);
+  //  drawMaskForScreen(printAspectRatio);
+  //}
 
   public void tryPhotoShoot() {
     if (!isPhotoShoot) startPhotoShoot();
@@ -156,8 +166,6 @@ class PhotoBoothController {
     int digit = getCountDownDigit(countdownStart);
     if (digit > 0 && !endPhotoShoot) {
       drawCurrent();
-      //fill(64);
-      //rect(COUNTDOWN_BOX_X, COUNTDOWN_BOX_Y, COUNTDOWN_BOX_WIDTH, COUNTDOWN_BOX_HEIGHT);
       fill(0x80FFFF80);
       textSize(largeFontSize);
       String digitS = str(digit);
@@ -179,6 +187,25 @@ class PhotoBoothController {
       fill(255);
     } else if (digit == 0) {
       drawCurrent();
+      fill(0x80FFFF80);
+      textSize(largeFontSize);
+      String digitS = "FREEZE!";
+      float tw = textWidth(digitS);
+      float th = largeFontSize/2;
+      if (orientation == LANDSCAPE) {
+        pushMatrix();
+        translate(screenWidth/2, screenHeight/2+th);
+        text(digitS, -tw/2, 0);
+        popMatrix();
+      } else {
+        pushMatrix();
+        translate(screenWidth/2+th, screenHeight/2);
+        rotate(-HALF_PI);
+        text(digitS, -tw/2, 0);
+        popMatrix();
+      }
+      textSize(fontSize);
+      fill(255);
     } else if (digit == -1) {
       // flash screen and take photo
       background(0);
@@ -274,14 +301,14 @@ class PhotoBoothController {
 
   public boolean incrementState() {
     boolean done = false;
-    if (imageProcessor.filterNum == 0) {
-      currentImage.loadPixels();
-    }
     images[currentState] = currentImage.get();
     if (currentState == 0) {
       datetime = getDateTime();
     }
     if (DEBUG) println("save photo "+ (currentState+1) + " " + datetime);
+    if (imageProcessor.filterNum > 0) {
+      saveImage(currentRawImage, currentState, OUTPUT_FOLDER_PATH, OUTPUT_FILENAME, datetime + "NF", fileType);
+    }
     saveImage(images[currentState], currentState, OUTPUT_FOLDER_PATH, OUTPUT_FILENAME, datetime + "", fileType);
     currentState += 1;
     if (currentState == numberOfPanels) {
@@ -306,7 +333,7 @@ class PhotoBoothController {
 
   // crop for printing
   PImage cropForPrint(PImage src, float printAspectRatio) {
-    if (DEBUG) println("cropForPrint "+printAspectRatio+ " mirror="+mirror+" " +(orientation==LANDSCAPE? "Landscape":"Portrait"));
+    if (DEBUG) println("cropForPrint "+printAspectRatio+ " mirrorPrint="+mirrorPrint+" " +(orientation==LANDSCAPE? "Landscape":"Portrait"));
     // first crop creating a new PImage
     float bw = (cameraWidth-(cameraHeight/printAspectRatio))/2.0;
     int sx = int(bw);
@@ -320,7 +347,7 @@ class PhotoBoothController {
     PImage img = createImage(dw, dh, RGB);
     img.copy(src, sx, sy, sw, sh, dx, dy, dw, dh);  // cropped copy
     // next mirror image if needed
-    if (mirror && orientation == PORTRAIT) {
+    if (mirrorPrint && orientation == PORTRAIT) {
       PGraphics pg;
       pg = createGraphics(dw, dh);
       pg.beginDraw();
@@ -333,7 +360,7 @@ class PhotoBoothController {
       //img = pg.copy();
       //pg.dispose();
       img = pg;
-    } else if (!mirror && orientation == PORTRAIT) {
+    } else if (!mirrorPrint && orientation == PORTRAIT) {
       PGraphics pg;
       pg = createGraphics(dw, dh);
       pg.beginDraw();
@@ -347,7 +374,7 @@ class PhotoBoothController {
       //img = pg.copy();
       //pg.dispose();
       img = pg;
-    } else if (mirror && orientation == LANDSCAPE) {
+    } else if (mirrorPrint && orientation == LANDSCAPE) {
       PGraphics pg;
       pg = createGraphics(dw, dh);
       pg.beginDraw();

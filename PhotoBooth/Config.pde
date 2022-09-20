@@ -1,3 +1,7 @@
+// Configuration from JSON file
+// Looks for file my.config.json
+// If not found uses config.json the default file - do not change config.json
+
 private final static int JAVA_MODE = 0;
 private final static int ANDROID_MODE = 1;
 int buildMode = JAVA_MODE;
@@ -24,6 +28,7 @@ String CAMERA_NAME_USB = "USB Camera";
 String CAMERA_NAME_UVC = "UVC Camera";
 String CAMERA_NAME_BRIO = "Logitech BRIO";
 String cameraName = CAMERA_NAME_C920;
+int cameraNumber = 0;
 
 // Camera Pipeline Examples for G-Streamer with Windows 10
 String PIPELINE_C920 = "pipeline: ksvideosrc device-index=0 ! image/jpeg, width=1920, height=1080, framerate=30/1 ! jpegdec ! videoconvert";
@@ -43,7 +48,9 @@ float printHeight;
 float printAspectRatio = 4.0/6.0;  // default 4x6 inch print portrait orientation
 
 int numberOfPanels = 1;
-boolean mirror = false;  // mirror screen by horizontal flip
+boolean mirrorPrint = false;  // mirror photos saved for print by horizontal flip
+boolean mirror = false;
+
 int countdownStart = 3;  // seconds
 String ipAddress;  // photo booth computer IP Address
 JSONObject configFile;
@@ -56,7 +63,7 @@ void initConfig() {
   if (buildMode == JAVA_MODE) {
     readConfig();
   } else if (buildMode == ANDROID_MODE) {
-    //readAConfig();  // TODO call different method
+    //readAConfig();  // TODO call different configuration function
   }
 }
 
@@ -97,8 +104,13 @@ void readConfig() {
     orientation = PORTRAIT;
   }
   pipeline = camera.getString("pipeline");
-  
-  
+  try {
+    cameraNumber = camera.getInt("number");
+  }
+  catch (RuntimeException rte) {
+    cameraNumber = 0;
+  }
+  if (DEBUG) println("cameraNumber="+cameraNumber);
   if (DEBUG) println("configuration camera name="+cameraName+ " cameraWidth="+cameraWidth + " cameraHeight="+ cameraHeight);
   if (DEBUG) println("orientation="+(orientation==LANDSCAPE? "Landscape":"Portrait"));
   if (DEBUG) println("mirror="+mirror);
@@ -110,6 +122,7 @@ void readConfig() {
   }
 }
 
+// Check if file exists
 boolean fileExists(String filenamePath) {
   File newFile = new File (filenamePath);
   if (newFile.exists()) {
