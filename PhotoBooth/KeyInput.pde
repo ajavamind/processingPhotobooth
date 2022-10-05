@@ -11,6 +11,7 @@ static final int KEYCODE_COMMA = 44;
 static final int KEYCODE_MINUS = 45;
 static final int KEYCODE_PERIOD = 46;
 static final int KEYCODE_SLASH = 47;
+static final int KEYCODE_QUESTION_MARK = 47;
 static final int KEYCODE_0 = 48;
 static final int KEYCODE_1 = 49;
 static final int KEYCODE_2 = 50;
@@ -87,12 +88,12 @@ void mousePressed() {
   if (DEBUG) println("mousePressed()");
   if (DEBUG) println("mouseButton="+mouseButton + " LEFT=" + LEFT + " RIGHT="+RIGHT+" CENTER="+CENTER);
   if (button == LEFT) {  // remote key A
-    lastKeyCode = KEYCODE_ENTER;
+    lastKeyCode = KEYCODE_LEFT_BRACKET; // Single Photo capture
     if (DEBUG) println("mousePressed set lastKeyCode="+lastKeyCode);
   } else if (button == RIGHT) {
     lastKeyCode = KEYCODE_ESC;
   } else if (button == CENTER) {
-    lastKeyCode = KEYCODE_C;  // collage
+    lastKeyCode = KEYCODE_RIGHT_BRACKET;  // collage 2x2 capture
   }
 }
 
@@ -157,6 +158,10 @@ int keyUpdate() {
     mirror = !mirror;
     if (DEBUG) println("mirror="+mirror);
     break;
+  case KEYCODE_N:  // mirror prints
+    mirrorPrint = !mirrorPrint;
+    if (DEBUG) println("mirrorPrint="+mirrorPrint);
+    break;
   case KEYCODE_C:
     preview = PREVIEW_OFF;
     set2x2Photo();
@@ -164,6 +169,22 @@ int keyUpdate() {
   case KEYCODE_S:
     preview = PREVIEW_OFF;
     setSinglePhoto();
+    break;
+  case KEYCODE_LEFT_BRACKET:
+    preview = PREVIEW_OFF;
+    setSinglePhoto();
+    if (!photoBoothController.isPhotoShoot) {
+      photoBoothController.tryPhotoShoot();
+    }
+    cmd = ENTER;
+    break;
+  case KEYCODE_RIGHT_BRACKET:
+    preview = PREVIEW_OFF;
+    set2x2Photo();
+    if (!photoBoothController.isPhotoShoot) {
+      photoBoothController.tryPhotoShoot();
+    }
+    cmd = ENTER;
     break;
   case KEYCODE_P:  // portrait orientation
     orientation = PORTRAIT;
@@ -174,6 +195,7 @@ int keyUpdate() {
     if (DEBUG) println("orientation="+(orientation==LANDSCAPE? "Landscape":"Portrait"));
     break;
   case KEYCODE_TAB:
+  case KEYCODE_QUESTION_MARK:
     preview = PREVIEW_OFF;
     showLegend = ! showLegend;
     if (DEBUG) println("preview=OFF "+preview);

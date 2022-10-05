@@ -311,7 +311,7 @@ class PhotoBoothController {
     }
     saveImage(images[currentState], currentState, OUTPUT_FOLDER_PATH, OUTPUT_FILENAME, datetime + "", fileType);
     currentState += 1;
-    if (currentState == numberOfPanels) {
+    if (currentState >= numberOfPanels) {
       done = true;
       currentState=0;
       endPhotoShoot();
