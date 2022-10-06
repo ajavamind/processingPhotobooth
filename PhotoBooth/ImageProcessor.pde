@@ -52,44 +52,6 @@ class ImageProcessor {
     return temp;
   }
 
-  //public PImage processImageAlt(Capture input) {
-  //  PImage temp = input;
-
-  //  switch (filterNum) {
-  //  case 0:
-  //    temp.filter(0);
-  //    break;
-  //  case 1:
-  //    temp.filter(GRAY);
-  //    break;
-  //  case 2:
-  //    temp.filter(THRESHOLD, 0.5);
-  //    break;
-  //  case 3:
-  //    temp.filter(POSTERIZE, 13);
-  //    break;
-  //  case 4:
-  //    temp.filter(POSTERIZE, 8);  // best
-  //    break;
-  //  case 5:
-  //    temp.filter(POSTERIZE, 5);
-  //    break;
-  //  case 6:
-  //    temp.filter(POSTERIZE, 4);
-  //    break;
-  //  case 7:
-  //    temp.filter(POSTERIZE, 3);
-  //    break;
-  //  case 8:
-  //    temp = mirror(temp);
-  //    break;
-  //  default:
-  //    temp.filter(0);
-  //    break;
-  //  }
-  //  return temp;
-  //}
-
   /**
    * Mirror example for Processing 4
    * by Daniel Shiffman.

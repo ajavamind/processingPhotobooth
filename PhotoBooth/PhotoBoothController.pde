@@ -10,8 +10,8 @@ class PhotoBoothController {
   boolean isPhotoShoot, endPhotoShoot;
   volatile int startPhotoShoot;
   volatile boolean noCountDown = false;
-  int photoDelay = 20;
-  int oldShootTimeout = 60;
+  int photoDelay = int(delayFactor*FRAME_RATE);
+  int oldShootTimeout = int(timeoutFactor*FRAME_RATE);
   int oldShoot = 0;
 
   int MAX_PANELS = 4;
@@ -46,6 +46,11 @@ class PhotoBoothController {
     collage = new PImage[4];
   }
 
+  void setTimeouts(float delayFactor, float timeoutFactor) {
+      photoDelay = int(delayFactor*FRAME_RATE);
+      oldShootTimeout = int(timeoutFactor*FRAME_RATE);
+  }
+  
   void updatePanelSize() {
     if (numberOfPanels == MAX_PANELS) {
       PANEL_WIDTH = screenWidth/2;
@@ -57,6 +62,7 @@ class PhotoBoothController {
   }
 
   private void drawImage(PImage input, boolean preview) {
+    if (input == null) return;
     float h = screenHeight;
     float w = ((float)screenHeight/printAspectRatio);
 
@@ -127,7 +133,11 @@ class PhotoBoothController {
   public void processImage(PImage input) {
     if (input == null) return;
     if (imageProcessor.filterNum > 0) currentRawImage = input.get();
-    currentImage = imageProcessor.processImage(input);
+    if (runFilter) {
+      currentImage = imageProcessor.processImage(input);
+    } else {
+      currentImage = input;
+    }
     drawImage(currentImage, false);
     drawMaskForScreen(printAspectRatio);
   }
@@ -399,9 +409,14 @@ class PhotoBoothController {
     float w = (screenWidth-(screenHeight/printAspectRatio))/2.0;
     float h = screenHeight;
     fill(0);
+    if (numberOfPanels == 4) {
+      stroke(128);
+    } else {
+      stroke(0);
+    }
     rect(x, y, w, h);  // left side
     rect(screenWidth-w, y, w, h);  // right side
-    fill(255);
+    fill(128);
 
     // check for collage mode
     if (numberOfPanels == 4) {
@@ -409,7 +424,7 @@ class PhotoBoothController {
       float angleText = 0;
       float tw;
       noFill();
-      stroke(255);
+      stroke(128);
       float xt = 0;
       float yt = 0;
       pushMatrix();
@@ -430,7 +445,7 @@ class PhotoBoothController {
       strokeWeight(4);
       if (orientation == LANDSCAPE) {
         rect(0, 0, w, w);  // square
-        fill(255);
+        fill(128);
         rect(0, w/2, w, 2); // horizontal line
         rect(w/2, 0, 2, w);  // vertical line
         switch(photoBoothController.currentState) {
@@ -467,6 +482,7 @@ class PhotoBoothController {
           break;
         }
       }
+    } else {
     }
   }
 

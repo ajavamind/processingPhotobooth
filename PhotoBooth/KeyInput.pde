@@ -90,9 +90,9 @@ void mousePressed() {
   if (button == LEFT) {  // remote key A
     lastKeyCode = KEYCODE_LEFT_BRACKET; // Single Photo capture
     if (DEBUG) println("mousePressed set lastKeyCode="+lastKeyCode);
-  } else if (button == RIGHT) {
-    lastKeyCode = KEYCODE_ESC;
   } else if (button == CENTER) {
+    lastKeyCode = KEYCODE_ESC;
+  } else if (button == RIGHT) {
     lastKeyCode = KEYCODE_RIGHT_BRACKET;  // collage 2x2 capture
   }
 }

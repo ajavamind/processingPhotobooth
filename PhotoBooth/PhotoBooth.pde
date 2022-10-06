@@ -9,8 +9,8 @@ import java.util.Date;
 import java.util.Enumeration;
 import java.util.Locale;
 
-private static final boolean DEBUG = true;
-String VERSION = "1.4.3";
+private static final boolean DEBUG = false;
+String VERSION = "1.4.4";
 
 Capture video;
 private final static int NUM_BUFFERS = 2;
@@ -23,10 +23,13 @@ int fontSize;
 int largeFontSize;
 PhotoBoothController photoBoothController;
 ImageProcessor imageProcessor;
+boolean runFilter = true;  // set to false when RENDERER is P2D or P3D
 String RENDERER = JAVA2D;
-//String RENDERER = P2D;  // a bug in video library prevents this render mode from working
+//String RENDERER = P2D;  // a bug in video library prevents this render mode from working with filters
 //String RENDERER = P3D;
-
+float FRAME_RATE = 30;
+float delayFactor = 3;
+float timeoutFactor = 3;
 
 private static final int PREVIEW_OFF = -1;
 private static final int PREVIEW = 0;
@@ -45,7 +48,7 @@ public void setup() {
   //text("Checking for camera connection", 20, height/2);													
   if (DEBUG) println("screenWidth="+screenWidth+" screenHeight="+screenHeight);
   photoBoothController = new PhotoBoothController();
-  frameRate(60);
+  frameRate(FRAME_RATE);
   smooth();
   font = loadFont("SansSerif-64.vlw");
   textFont(font);
@@ -102,7 +105,11 @@ public void setup() {
       }
     }
 
-    if (DEBUG) println("Using Camera: "+cameras[cameraIndex+cameraNumber]);
+    if ((cameraIndex+cameraNumber)<cameras.length) {
+      if (DEBUG) println("Using Camera: "+cameras[cameraIndex+cameraNumber]);
+    } else {
+      cameraNumber = 0;  // force in range
+    }
 
     // replace index number in PIPELINE
     pipeline = pipeline.replaceFirst("device-index=0", "device-index="+str(cameraIndex));
@@ -134,16 +141,28 @@ public void setup() {
     try {
       if (RENDERER.equals(P2D) || RENDERER.equals(P3D)) {
         ((com.jogamp.newt.opengl.GLWindow) surface.getNative()).requestFocus();  // for P2D
+        delayFactor = 3;
+        timeoutFactor = 3;
       } else {
         ((java.awt.Canvas) surface.getNative()).requestFocus();  // for JAVA2D (default)
+        delayFactor = .66;
+        timeoutFactor = 3;
       }
     }
     catch (Exception ren) {
       println("Renderer: "+RENDERER+ " Window focus exception: " + ren.toString());
     }
   }
+  photoBoothController.setTimeouts(delayFactor, timeoutFactor);
   surface.setTitle(titleText);
   if (DEBUG) println("Renderer: "+RENDERER);
+  if (DEBUG) println("delayFactor = "+delayFactor+" timeoutFactor="+timeoutFactor);
+  // temporary until video library fixes bug
+  if (RENDERER.equals(P2D) || RENDERER.equals(P3D)) {
+    runFilter = false;
+    if (DEBUG) println("No Filter!");
+  }
+
   if (DEBUG) println("finished setup()");
 }
 
@@ -151,14 +170,17 @@ void captureEvent(Capture camera) {
   camera.read();
   // buffer captured video frame
   if (RENDERER.equals(P2D) || RENDERER.equals(P3D)) {
-    PImage temp = createImage(camera.width, camera.height, RGB);
-    camera.loadPixels();
-    arrayCopy(camera.pixels, temp.pixels);
-    camImage[nextIndex] = temp;
-  } else {
+    if (runFilter) {
+      PImage temp = createImage(camera.width, camera.height, RGB);
+      camera.loadPixels();
+      arrayCopy(camera.pixels, temp.pixels);
+      camImage[nextIndex] = temp;
+    } else {
+      camImage[nextIndex] = camera;
+    }
+  } else {  // JAVA2D
     camImage[nextIndex] = camera.copy();
   }
-
   camIndex = nextIndex;
   nextIndex++;
   nextIndex = nextIndex & 1; // alternating 2 buffers
@@ -184,7 +206,7 @@ public void draw() {
     }
     return;
   }
-  //background(0);
+  
   if (photoBoothController.endPhotoShoot) {
     photoBoothController.oldShoot(); // show result
   } else {
@@ -201,6 +223,7 @@ public void draw() {
 }
 
 void drawLegend() {
+  fill(255);
   int vertOffset = fontSize;
   int horzOffset = 20;
   for (int i=0; i<legend.length; i++) {
@@ -213,6 +236,7 @@ void drawLegend() {
 
 // Draw instruction and event text on screen
 void drawText() {
+  fill(128);
   if (preview == PREVIEW_OFF) {
     float angleText;
     float tw;
