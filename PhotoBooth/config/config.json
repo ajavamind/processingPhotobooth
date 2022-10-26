@@ -15,9 +15,7 @@
 		"height": 2160,
 	},
     "camera": {
-    	"name": "Logitech BRIO", 
-		"numberDescription": "number index variation for the camera being used, 0 relative first",
-		"number": 1,
+    	"name": "Logitech BRIO #2", 
         "width": 3840,
 		"height": 2160,
 		"fps": 30,

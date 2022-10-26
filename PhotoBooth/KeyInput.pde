@@ -130,6 +130,7 @@ int keyUpdate() {
       video.stop();
       video.dispose();
     }
+    stopUDP();
     exit();
     break;
   case KEYCODE_ENTER:
@@ -193,6 +194,9 @@ int keyUpdate() {
   case KEYCODE_L:  // landscape orientation
     orientation = LANDSCAPE;
     if (DEBUG) println("orientation="+(orientation==LANDSCAPE? "Landscape":"Portrait"));
+    break;
+  case KEYCODE_O:  // display orientation
+    if (DEBUG) println("mirror="+mirror + " orientation="+(orientation==LANDSCAPE? "Landscape":"Portrait"));
     break;
   case KEYCODE_TAB:
   case KEYCODE_QUESTION_MARK:

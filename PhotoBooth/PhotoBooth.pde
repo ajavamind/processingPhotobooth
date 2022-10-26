@@ -9,8 +9,8 @@ import java.util.Date;
 import java.util.Enumeration;
 import java.util.Locale;
 
-private static final boolean DEBUG = false;
-String VERSION = "1.4.4";
+private static final boolean DEBUG = true;
+String VERSION = "1.4.5";
 
 Capture video;
 private final static int NUM_BUFFERS = 2;
@@ -35,6 +35,7 @@ private static final int PREVIEW_OFF = -1;
 private static final int PREVIEW = 0;
 private static final int PREVIEW_END = 1;
 int preview = PREVIEW_OFF; // default no preview
+
 boolean showLegend = false;
 String[] legend;
 
@@ -48,6 +49,7 @@ public void setup() {
   //text("Checking for camera connection", 20, height/2);													
   if (DEBUG) println("screenWidth="+screenWidth+" screenHeight="+screenHeight);
   photoBoothController = new PhotoBoothController();
+  intializeMulti(ipAddress);  // address of a device on this private network
   frameRate(FRAME_RATE);
   smooth();
   font = loadFont("SansSerif-64.vlw");
@@ -105,11 +107,7 @@ public void setup() {
       }
     }
 
-    if ((cameraIndex+cameraNumber)<cameras.length) {
-      if (DEBUG) println("Using Camera: "+cameras[cameraIndex+cameraNumber]);
-    } else {
-      cameraNumber = 0;  // force in range
-    }
+    if (DEBUG) println("Using Camera: "+cameras[cameraIndex]);
 
     // replace index number in PIPELINE
     pipeline = pipeline.replaceFirst("device-index=0", "device-index="+str(cameraIndex));
@@ -123,7 +121,7 @@ public void setup() {
 
       //video = new Capture(this, cameraWidth, cameraHeight, pipeline);
       //if (DEBUG) println("PIPELINE="+pipeline);
-      video= new Capture(this, cameraWidth, cameraHeight, cameras[cameraIndex+cameraNumber]);
+      video= new Capture(this, cameraWidth, cameraHeight, cameras[cameraIndex]);
       if (DEBUG) println("Not using pipeline set");
 
       video.start();
@@ -181,6 +179,7 @@ void captureEvent(Capture camera) {
   } else {  // JAVA2D
     camImage[nextIndex] = camera.copy();
   }
+
   camIndex = nextIndex;
   nextIndex++;
   nextIndex = nextIndex & 1; // alternating 2 buffers
@@ -189,6 +188,7 @@ void captureEvent(Capture camera) {
 public void draw() {
   // process any inputs to steer operation drawing the display
   int command = keyUpdate(); // decode key inputs received on threads outside the draw thread loop
+
   if (showLegend) {
     background(0);
     drawLegend();
@@ -206,7 +206,7 @@ public void draw() {
     }
     return;
   }
-  
+
   if (photoBoothController.endPhotoShoot) {
     photoBoothController.oldShoot(); // show result
   } else {

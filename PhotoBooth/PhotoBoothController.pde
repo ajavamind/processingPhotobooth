@@ -47,10 +47,10 @@ class PhotoBoothController {
   }
 
   void setTimeouts(float delayFactor, float timeoutFactor) {
-      photoDelay = int(delayFactor*FRAME_RATE);
-      oldShootTimeout = int(timeoutFactor*FRAME_RATE);
+    photoDelay = int(delayFactor*FRAME_RATE);
+    oldShootTimeout = int(timeoutFactor*FRAME_RATE);
   }
-  
+
   void updatePanelSize() {
     if (numberOfPanels == MAX_PANELS) {
       PANEL_WIDTH = screenWidth/2;
@@ -199,7 +199,7 @@ class PhotoBoothController {
       drawCurrent();
       fill(0x80FFFF80);
       textSize(largeFontSize);
-      String digitS = "FREEZE!";
+      String digitS = finalCountdownText;
       float tw = textWidth(digitS);
       float th = largeFontSize/2;
       if (orientation == LANDSCAPE) {
@@ -219,6 +219,7 @@ class PhotoBoothController {
     } else if (digit == -1) {
       // flash screen and take photo
       background(0);
+      takePhoto();
       boolean done = incrementState();
       if (done) {
         if (DEBUG) println("done drawPrevious()");

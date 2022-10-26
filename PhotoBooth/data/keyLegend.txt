@@ -1,6 +1,6 @@
 Key Legend
 
-TAB - toggles legend on/off
+TAB/? - toggles legend on/off
 Enter or Left mouse button - capture single photo
 ESC or Center mouse button - toggle review last photo
 Right mouse button - capture 4 photo collage

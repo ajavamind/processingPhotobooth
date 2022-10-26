@@ -17,6 +17,8 @@ float cameraAspectRatio;
 
 String eventText;
 String instructionLineText;
+String finalCountdownText = "Freeze!";
+
 String titleText="Photo Booth";
 String OUTPUT_FILENAME = "IMG_";
 String OUTPUT_COMPOSITE_FILENAME = "IMG_";
@@ -28,7 +30,6 @@ String CAMERA_NAME_USB = "USB Camera";
 String CAMERA_NAME_UVC = "UVC Camera";
 String CAMERA_NAME_BRIO = "Logitech BRIO";
 String cameraName = CAMERA_NAME_C920;
-int cameraNumber = 0;
 
 // Camera Pipeline Examples for G-Streamer with Windows 10
 String PIPELINE_C920 = "pipeline: ksvideosrc device-index=0 ! image/jpeg, width=1920, height=1080, framerate=30/1 ! jpegdec ! videoconvert";
@@ -77,14 +78,26 @@ void readConfig() {
   //configFile = loadJSONObject(sketchPath("config")+File.separator+"config.json");
   configuration = configFile.getJSONObject("configuration");
   //DEBUG = configFile.getBoolean("debug");
+  // for MultiCam.pde 
+  try {
+    multiCamEnabled = configFile.getBoolean("multiCamEnabled");
+  }
+  catch (Exception e) {
+    multiCamEnabled = false;
+  }
   mirror = configuration.getBoolean("mirrorScreen");
   countdownStart = configuration.getInt("countDownStart");
   fileType = configuration.getString("fileType");
   OUTPUT_FOLDER_PATH = configuration.getString("outputFolderPath");
   ipAddress = configuration.getString("IPaddress");
+  if (DEBUG) println("ipAddress="+ipAddress);
   instructionLineText = configuration.getString("instructionLineText");
   eventText = configuration.getString("eventText");
-
+  try {
+  finalCountdownText = configuration.getString("finalCountdownText");
+  } catch (Exception fct) {
+    finalCountdownText = "Freeze!";
+  }
   display = configFile.getJSONObject("display");
   if (display != null) {
     screenWidth = display.getInt("width");
@@ -104,13 +117,6 @@ void readConfig() {
     orientation = PORTRAIT;
   }
   pipeline = camera.getString("pipeline");
-  try {
-    cameraNumber = camera.getInt("number");
-  }
-  catch (RuntimeException rte) {
-    cameraNumber = 0;
-  }
-  if (DEBUG) println("cameraNumber="+cameraNumber);
   if (DEBUG) println("configuration camera name="+cameraName+ " cameraWidth="+cameraWidth + " cameraHeight="+ cameraHeight);
   if (DEBUG) println("orientation="+(orientation==LANDSCAPE? "Landscape":"Portrait"));
   if (DEBUG) println("mirror="+mirror);
@@ -119,6 +125,7 @@ void readConfig() {
     printWidth = printer.getFloat("printWidth");
     printHeight = printer.getFloat("printHeight");
     printAspectRatio = printWidth/printHeight;
+    if (DEBUG) println("printAspectRatio="+printAspectRatio);
   }
 }
 
