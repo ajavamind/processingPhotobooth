@@ -1,4 +1,4 @@
-// Webcam Photobooth
+// Webcam Photobooth Application
 // Copyright 2022 Andy Modla
 // Build with Processing 4.0.1 SDK
 // Using Processing video library version 2.2.1 with GStreamer version 1.20.3
@@ -9,8 +9,8 @@ import java.util.Date;
 import java.util.Enumeration;
 import java.util.Locale;
 
-private static final boolean DEBUG = true;
-String VERSION = "1.4.5";
+private static final boolean DEBUG = false;
+String VERSION = "1.4.10";
 
 Capture video;
 private final static int NUM_BUFFERS = 2;
@@ -24,10 +24,11 @@ int largeFontSize;
 PhotoBoothController photoBoothController;
 ImageProcessor imageProcessor;
 boolean runFilter = true;  // set to false when RENDERER is P2D or P3D
+
 String RENDERER = JAVA2D;
 //String RENDERER = P2D;  // a bug in video library prevents this render mode from working with filters
 //String RENDERER = P3D;
-float FRAME_RATE = 30;
+float FRAME_RATE = 20;
 float delayFactor = 3;
 float timeoutFactor = 3;
 
@@ -37,17 +38,26 @@ private static final int PREVIEW_END = 1;
 int preview = PREVIEW_OFF; // default no preview
 
 boolean showLegend = false;
+int legendPage = 0;
+String[] cameras = null;
+int cameraIndex = 0;
+boolean showCameras = false;
 String[] legend;
+boolean screenMask = true;
+boolean screenshot = false;
+int screenshotCounter = 1;
 
 public void setup() {
   initConfig();
   fullScreen(RENDERER);
-  // size(1920, 1080, RENDERER);  // for debug
+  //size(1080, 1920, RENDERER);  // for debug
+  //size(1920, 1080, RENDERER);  // for debug
+  //size(3840, 2160, RENDERER);  // for debug
 
   screenWidth = width;
   screenHeight = height;
+  if (DEBUG) println("screenWidth="+screenWidth + " screenHeight="+screenHeight);
   //text("Checking for camera connection", 20, height/2);													
-  if (DEBUG) println("screenWidth="+screenWidth+" screenHeight="+screenHeight);
   photoBoothController = new PhotoBoothController();
   intializeMulti(ipAddress);  // address of a device on this private network
   frameRate(FRAME_RATE);
@@ -76,9 +86,8 @@ public void setup() {
   if (DEBUG) println("OUTPUT_FOLDER_PATH="+OUTPUT_FOLDER_PATH);
 
   // get list of cameras connected
-  String[] cameras = null;
   boolean camAvailable = false;
-  int cameraIndex = 0;
+  cameraIndex = 0;  // default camera index
   int retrys = 10;
   while (!camAvailable && retrys > 0) {
     try {
@@ -107,10 +116,16 @@ public void setup() {
       }
     }
 
-    if (DEBUG) println("Using Camera: "+cameras[cameraIndex]);
+    if (DEBUG) println("Found Camera: "+cameras[cameraIndex]+".");
+
+    //String dev = cameras[cameraIndex].substring(0,cameras[cameraIndex].lastIndexOf(" #"));
+    //println(dev+".");
+    //String dev = cameras[cameraIndex];
+    //String[] features = Capture.getCapabilities(dev);
+    //if (DEBUG) printArray(features);
 
     // replace index number in PIPELINE
-    pipeline = pipeline.replaceFirst("device-index=0", "device-index="+str(cameraIndex));
+    //pipeline = pipeline.replaceFirst("device-index=0", "device-index="+str(cameraIndex));
     // The camera can be initialized directly using an
     // element from the array returned by list()
     // default first camera found at index 0
@@ -119,11 +134,13 @@ public void setup() {
       //video = new Capture(this, cameras[cameraIndex]);  // using default pipeline only captured low resolution of camera example 640x480 for HD Pro Webcam C920
       // pipeline for windows 10 - captures full HD 1920x1080 for HD Pro Webcam C920
 
-      //video = new Capture(this, cameraWidth, cameraHeight, pipeline);
-      //if (DEBUG) println("PIPELINE="+pipeline);
-      video= new Capture(this, cameraWidth, cameraHeight, cameras[cameraIndex]);
-      if (DEBUG) println("Not using pipeline set");
-
+      if (pipeline != null) {
+        video = new Capture(this, cameraWidth, cameraHeight, pipeline);
+        if (DEBUG) println("Using PIPELINE=" + pipeline);
+      } else {
+        video= new Capture(this, cameraWidth, cameraHeight, cameras[cameraIndex]);
+        if (DEBUG) println("Using camera: " + cameras[cameraIndex] );
+      }
       video.start();
     }
   }
@@ -186,12 +203,21 @@ void captureEvent(Capture camera) {
 }
 
 public void draw() {
+  //System.gc();
   // process any inputs to steer operation drawing the display
   int command = keyUpdate(); // decode key inputs received on threads outside the draw thread loop
 
   if (showLegend) {
     background(0);
-    drawLegend();
+    drawLegend(legend);
+    saveScreenshot();
+    return;
+  }
+
+  if (showCameras && cameras != null) {
+    background(0);
+    drawCameras();
+    saveScreenshot();
     return;
   }
 
@@ -204,6 +230,7 @@ public void draw() {
     if (command == ENTER) {
       exit();
     }
+    saveScreenshot();
     return;
   }
 
@@ -220,18 +247,43 @@ public void draw() {
       photoBoothController.drawPhotoShoot();
     }
   }
+  // Drawing finished, check for screenshot
+  saveScreenshot();
 }
 
-void drawLegend() {
+void drawLegend(String[] legend) {
   fill(255);
   int vertOffset = fontSize;
   int horzOffset = 20;
+
   for (int i=0; i<legend.length; i++) {
     if (i==0) {
       text(legend[i] + " Version: "+ VERSION, horzOffset, vertOffset*(i+1));
     }
     text(legend[i], horzOffset, vertOffset*(i+1));
   }
+}
+
+void drawCameras() {
+  fill(255);
+  int vertOffset = fontSize;
+  int horzOffset = 20;
+  int i = 0;
+  String appd = "";
+  if (cameras.length == 0) {
+    appd = "No Cameras Available";
+    text(appd, horzOffset, vertOffset*(i+1));
+  } else {
+    while ( i < cameras.length) {
+      appd = "";
+      if (cameraIndex == i) appd = " selected";
+      text(cameras[i]+appd, horzOffset, vertOffset*(i+1));
+      i++;
+    }
+  }
+  i++;
+  text("mirror="+(mirror==true ? "ON": "OFF"), horzOffset, vertOffset*(i++));
+  text("orientation="+(orientation==LANDSCAPE ? "LANDSCAPE":"PORTRAIT"), horzOffset, vertOffset*(i++));
 }
 
 // Draw instruction and event text on screen
@@ -271,6 +323,15 @@ void drawText() {
   }
 }
 
+void saveScreenshot() {
+  if (screenshot) {
+    screenshot = false;
+    saveScreen(OUTPUT_FOLDER_PATH, "screenshot_", number(screenshotCounter), "png");
+    if (DEBUG) println("save "+ "screenshot_" + number(screenshotCounter));
+    screenshotCounter++;
+  }
+}
+
 // Save image of the composite screen
 void saveScreen(String outputFolderPath, String outputFilename, String suffix, String filetype) {
   save(outputFolderPath + File.separator + outputFilename + suffix + "." + filetype);
@@ -287,6 +348,18 @@ String getDateTime() {
 void setEXIF(String filename) {
   try {
     Process process = Runtime.getRuntime().exec("exiftool -n -orientation=6 "+filename);
+    process.waitFor();
+  }
+  catch (Exception ex) {
+  }
+}
+
+// calls printPhoto.bat in the sketch path
+void printPhoto(String filenamePath) {
+  if (filenamePath == null) return;
+  try {
+    if (DEBUG) println("process "+sketchPath() + File.separator + "printPhoto.bat "+ filenamePath);
+    Process process = Runtime.getRuntime().exec(sketchPath()+ File.separator + "printPhoto.bat "+filenamePath);
     process.waitFor();
   }
   catch (Exception ex) {

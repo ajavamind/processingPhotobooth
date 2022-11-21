@@ -19,7 +19,7 @@ class ImageProcessor {
   public PImage processImage(PImage temp) {
     switch (filterNum) {
     case 0:
-      //temp.filter(0);
+      temp.filter(0);
       break;
     case 1:
       temp.filter(GRAY);

@@ -214,12 +214,13 @@ class PhotoBoothController {
         text(digitS, -tw/2, 0);
         popMatrix();
       }
+      focusPush();  // trigger Focus
       textSize(fontSize);
       fill(255);
     } else if (digit == -1) {
       // flash screen and take photo
       background(0);
-      takePhoto();
+      takePhoto(doubleTrigger);  // take photo
       boolean done = incrementState();
       if (done) {
         if (DEBUG) println("done drawPrevious()");
@@ -405,6 +406,7 @@ class PhotoBoothController {
   // draw mask for screen to match print image aspect ratio
   // 4x6 print aspect ratio
   void drawMaskForScreen( float printAspectRatio) {
+    if (!screenMask) return;
     float x = 0;
     float y = 0;
     float w = (screenWidth-(screenHeight/printAspectRatio))/2.0;

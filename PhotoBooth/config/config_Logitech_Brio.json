@@ -9,6 +9,7 @@
 		"fileType": "jpg",
 		"eventText": "Your Photo Booth Event",
 		"instructionLineText": "^Look Here^",
+		"finalCountdownText": "Freeze!",
 	},
 	"display": {
 		"width": 1920,

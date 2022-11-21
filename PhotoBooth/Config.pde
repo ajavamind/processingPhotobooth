@@ -14,6 +14,7 @@ int dividerSize = 10; // 2x2 photo collage layout divider line width
 int cameraWidth = 1920;
 int cameraHeight = 1080;
 float cameraAspectRatio;
+boolean doubleTrigger = false;
 
 String eventText;
 String instructionLineText;
@@ -34,8 +35,6 @@ String cameraName = CAMERA_NAME_C920;
 // Camera Pipeline Examples for G-Streamer with Windows 10
 String PIPELINE_C920 = "pipeline: ksvideosrc device-index=0 ! image/jpeg, width=1920, height=1080, framerate=30/1 ! jpegdec ! videoconvert";
 String PIPELINE_USB = "pipeline: ksvideosrc device-index=0 ! image/jpeg, width=1920, height=1080, framerate=30/1 ! jpegdec ! videoconvert";
-String PIPELINE_3D = "pipeline: ksvideosrc device-index=0 ! image/jpeg, width=3840, height=1080, framerate=30/1 ! jpegdec ! videoconvert";
-String PIPELINE_3D_USB_Camera = "pipeline: ksvideosrc device-index=0 ! image/jpeg, width=2560, height=960, framerate=30/1 ! jpegdec ! videoconvert";
 String PIPELINE_UVC = "pipeline: ksvideosrc device-index=0 ! image/jpeg ! jpegdec ! videoconvert";  // works for UVC Camera AntVR CAP 2
 String PIPELINE_BRIO = "pipeline: ksvideosrc device-index=0 ! image/jpeg, width=3840, height=2160, framerate=30/1 ! jpegdec ! videoconvert";
 String pipeline = PIPELINE_BRIO; // default
@@ -93,10 +92,9 @@ void readConfig() {
   if (DEBUG) println("ipAddress="+ipAddress);
   instructionLineText = configuration.getString("instructionLineText");
   eventText = configuration.getString("eventText");
-  try {
-  finalCountdownText = configuration.getString("finalCountdownText");
-  } catch (Exception fct) {
-    finalCountdownText = "Freeze!";
+  String countdownText = configuration.getString("finalCountdownText");
+  if (countdownText != null) {
+    finalCountdownText = countdownText;
   }
   display = configFile.getJSONObject("display");
   if (display != null) {
@@ -117,6 +115,7 @@ void readConfig() {
     orientation = PORTRAIT;
   }
   pipeline = camera.getString("pipeline");
+  if (DEBUG) println("pipeline="+pipeline);
   if (DEBUG) println("configuration camera name="+cameraName+ " cameraWidth="+cameraWidth + " cameraHeight="+ cameraHeight);
   if (DEBUG) println("orientation="+(orientation==LANDSCAPE? "Landscape":"Portrait"));
   if (DEBUG) println("mirror="+mirror);

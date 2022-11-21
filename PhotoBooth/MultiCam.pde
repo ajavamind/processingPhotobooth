@@ -1,5 +1,5 @@
 // Multi Remote Camera Control
-// Broadcasts focus and shutter trigger on local network to 
+// Broadcasts focus and shutter trigger on local network to
 // Android devices running Multi Remote Camera application
 // and Arduino devices waiting for UDP messages
 
@@ -38,7 +38,10 @@ static final String HTTPport = "8080";
 void intializeMulti(String ipAddress) {
   broadcastIpAddress = ipAddress.substring(0, ipAddress.lastIndexOf("."))+".255";
   udpClient = null;
-  if (!multiCamEnabled) return;
+  if (!multiCamEnabled) {
+    if (DEBUG) println("multiCamEnabled=false");
+    return;
+  }
   port = UDPport;
   try {
     udpClient = new UdpClient(broadcastIpAddress, port);  // from netP5.* library
@@ -51,6 +54,9 @@ void intializeMulti(String ipAddress) {
   connected = false;
   if (udpClient != null) {
     connected = true;
+    if (DEBUG) println("Wifi connected "+broadcastIpAddress);
+  } else {
+    if (DEBUG) println("Wifi not connected "+broadcastIpAddress);
   }
 }
 
@@ -169,12 +175,20 @@ void cameraOk() {
 void shutterPushRelease() {
   if (udpClient != null) {
     udpClient.send("S"+getFilename(UPDATE, PHOTO_MODE));
+    udpClient.send("R");
   }
 }
 
-void takePhoto() {
-  if (udpClient != null) {
-    udpClient.send("C"+getFilename(UPDATE, PHOTO_MODE));
+void takePhoto(boolean doubleTrigger) {
+  if (doubleTrigger) {
+    focusPush();
+    shutterPush();
+    delay(100);
+    shutterPushRelease();
+  } else {
+    if (udpClient != null) {
+      udpClient.send("C"+getFilename(UPDATE, PHOTO_MODE));
+    }
   }
 }
 

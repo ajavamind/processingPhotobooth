@@ -101,7 +101,7 @@ void keyReleased() {
 }
 
 void keyPressed() {
-  if (DEBUG) println("key="+key + " keydecimal=" + int(key) + " keyCode="+keyCode);        
+  if (DEBUG) println("key="+key + " keydecimal=" + int(key) + " keyCode="+keyCode);
   //if (DEBUG) Log.d(TAG, "key=" + key + " keyCode=" + keyCode);  // Android
   if (key==ESC) {
     key = 0;
@@ -155,6 +155,15 @@ int keyUpdate() {
     photoBoothController.setFilter(index);
     if (DEBUG) println("setFilter="+photoBoothController.getFilter());
     break;
+  case KEYCODE_K:
+    takePhoto(false);
+    break;
+  case KEYCODE_F:
+    focusPush();
+    break;
+  case KEYCODE_R:
+    shutterRelease();
+    break;
   case KEYCODE_M:  // mirror view
     mirror = !mirror;
     if (DEBUG) println("mirror="+mirror);
@@ -170,6 +179,16 @@ int keyUpdate() {
   case KEYCODE_S:
     preview = PREVIEW_OFF;
     setSinglePhoto();
+    break;
+  case KEYCODE_U:  // save screenshot file
+    screenshot = true;
+    break;
+  case KEYCODE_V:  // print file photo, should be in preview mode
+    if (preview == PREVIEW) {
+      // TODO
+      //if (DEBUG) println("print "+ photoBoothController.getFilename());
+      //printPhoto(photoBoothController.getFilename());
+    }
     break;
   case KEYCODE_LEFT_BRACKET:
     preview = PREVIEW_OFF;
@@ -195,10 +214,12 @@ int keyUpdate() {
     orientation = LANDSCAPE;
     if (DEBUG) println("orientation="+(orientation==LANDSCAPE? "Landscape":"Portrait"));
     break;
-  case KEYCODE_O:  // display orientation
-    if (DEBUG) println("mirror="+mirror + " orientation="+(orientation==LANDSCAPE? "Landscape":"Portrait"));
+  case KEYCODE_T: // toggle mask
+    screenMask = ! screenMask;
     break;
   case KEYCODE_TAB:
+    showCameras = ! showCameras;
+    break;
   case KEYCODE_QUESTION_MARK:
     preview = PREVIEW_OFF;
     showLegend = ! showLegend;
@@ -218,13 +239,12 @@ int keyUpdate() {
     preview++;
     if (preview >= PREVIEW_END) {
       preview = PREVIEW_OFF;
-    } 
+    }
     if (DEBUG) println("preview="+preview);
     break;
-  case KEYCODE_D: // toggle DEBUG, output debug information to the console
-    //DEBUG = !DEBUG;
-    if (DEBUG) println("mirror="+mirror);
-    if (DEBUG) println("orientation="+(orientation==LANDSCAPE? "Landscape":"Portrait"));
+  case KEYCODE_D: // toggle multi camera double trigger
+    doubleTrigger = !doubleTrigger;
+    if (DEBUG) println("multi camera double trigger="+doubleTrigger);
     break;
   default:
     break;
