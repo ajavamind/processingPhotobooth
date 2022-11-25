@@ -15,6 +15,9 @@ int cameraWidth = 1920;
 int cameraHeight = 1080;
 float cameraAspectRatio;
 boolean doubleTrigger = false;
+int doubleTriggerDelayMax = 1000;
+int doubleTriggerDelayMin = 200;
+int doubleTriggerDelay = doubleTriggerDelayMin;
 
 String eventText;
 String instructionLineText;

@@ -106,12 +106,10 @@ void keyPressed() {
   if (key==ESC) {
     key = 0;
     keyCode = KEYCODE_ESC;
-    //endLogger();
-    //    keyCode = 0;
-    //    return;
   } else if (key == 65535 && keyCode == 0) { // special case all other keys
+    // ignore key
     key = 0;
-    keyCode = KEYCODE_C;  // use collage mode
+    keyCode = 0;
   }
   lastKey = key;
   lastKeyCode = keyCode;
@@ -156,7 +154,10 @@ int keyUpdate() {
     if (DEBUG) println("setFilter="+photoBoothController.getFilter());
     break;
   case KEYCODE_K:
-    takePhoto(false);
+    takePhoto(doubleTrigger, false);
+    break;
+  case KEYCODE_Z:
+    takePhoto(doubleTrigger, true);
     break;
   case KEYCODE_F:
     focusPush();
@@ -183,11 +184,18 @@ int keyUpdate() {
   case KEYCODE_U:  // save screenshot file
     screenshot = true;
     break;
-  case KEYCODE_V:  // print file photo, should be in preview mode
+  case KEYCODE_W:  // print file photo, should be in preview mode
     if (preview == PREVIEW) {
       // TODO
       //if (DEBUG) println("print "+ photoBoothController.getFilename());
       //printPhoto(photoBoothController.getFilename());
+    }
+    break;
+  case KEYCODE_Y:  // double trigger delay time toggle
+    if (doubleTriggerDelay != doubleTriggerDelayMax) {
+      doubleTriggerDelay = doubleTriggerDelayMax;
+    } else {
+      doubleTriggerDelay = doubleTriggerDelayMin;
     }
     break;
   case KEYCODE_LEFT_BRACKET:
@@ -222,8 +230,11 @@ int keyUpdate() {
     break;
   case KEYCODE_QUESTION_MARK:
     preview = PREVIEW_OFF;
-    showLegend = ! showLegend;
     if (DEBUG) println("preview=OFF "+preview);
+    legendPage++;
+    if (legendPage >= 2) {
+      legendPage = -1;
+    }
     break;
   case KEYCODE_SPACE:
     // Immediate capture not countdown

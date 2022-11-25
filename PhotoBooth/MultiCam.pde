@@ -179,15 +179,23 @@ void shutterPushRelease() {
   }
 }
 
-void takePhoto(boolean doubleTrigger) {
+void takePhoto(boolean doubleTrigger, boolean shutter) {
   if (doubleTrigger) {
     focusPush();
     shutterPush();
-    delay(100);
-    shutterPushRelease();
+    delay(doubleTriggerDelay);
+    if (shutter) {
+      shutterPush();
+    } else {
+      shutterPushRelease();
+    }
   } else {
     if (udpClient != null) {
-      udpClient.send("C"+getFilename(UPDATE, PHOTO_MODE));
+      if (shutter) {
+        udpClient.send("S"+getFilename(UPDATE, PHOTO_MODE));
+      } else {
+        udpClient.send("C"+getFilename(UPDATE, PHOTO_MODE));
+      }
     }
   }
 }

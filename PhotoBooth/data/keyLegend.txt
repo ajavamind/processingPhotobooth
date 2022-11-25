@@ -1,26 +1,22 @@
-Key Legend
+Key Command Legend page 1
 
-?/ - Toggles key legend on/off
-Enter or Left mouse button - capture single photo
-ESC or Center mouse button - toggle review last photo
-Right mouse button - capture 4 photo collage
+?/ - Toggle key command legend pages
+Enter - Start countdown capture
+Left mouse button - Start single photo capture
+ESC or Center mouse button - Toggle Review last photo
+Right mouse button - Start 4 photo collage capture
 S - Single photo mode
 C - Collage photo mode
 Q - Exit Photobooth
-Space Bar - immediate capture no countdown
-Image Filters:
+
+IMAGE FILTERS:
 0 - No Filter
 1 - Grayscale
 2 - Level threshold 0.5
 3 - Posterize 13
 4 - Posterize 8
 5 - Posterize 5
-DEBUG:
-M - Toggle Mirror
-P - Portrait mode
-L - Landscape mode
-D - Debug information to the console
-
-TAB - Show camera list
-T - Toggle screen mask
-N - Toggle Mirror Prints
+6 -
+7 - 
+8 -
+9 - 

@@ -10,7 +10,7 @@ import java.util.Enumeration;
 import java.util.Locale;
 
 private static final boolean DEBUG = false;
-String VERSION = "1.4.10";
+String VERSION = "1.4.11";
 
 Capture video;
 private final static int NUM_BUFFERS = 2;
@@ -37,12 +37,14 @@ private static final int PREVIEW = 0;
 private static final int PREVIEW_END = 1;
 int preview = PREVIEW_OFF; // default no preview
 
-boolean showLegend = false;
-int legendPage = 0;
+int legendPage = -1;
+String[] legend1;
+String[] legend2;
+String[][] legend;
+
 String[] cameras = null;
 int cameraIndex = 0;
 boolean showCameras = false;
-String[] legend;
 boolean screenMask = true;
 boolean screenshot = false;
 int screenshotCounter = 1;
@@ -76,8 +78,10 @@ public void setup() {
   textSize(fontSize);
   largeFontSize = 6*fontSize;
 
-  legend = loadStrings("keyLegend.txt");
-
+  legend1 = loadStrings("keyLegend.txt");
+  legend2 = loadStrings("keyLegend2.txt");
+  legend = new String[][] { legend1, legend2};
+  
   if (OUTPUT_FOLDER_PATH.equals("output")) {  // default
     //OUTPUT_FOLDER_PATH = sketchPath() + File.separator + "output";
     OUTPUT_FOLDER_PATH = sketchPath("output");
@@ -207,9 +211,9 @@ public void draw() {
   // process any inputs to steer operation drawing the display
   int command = keyUpdate(); // decode key inputs received on threads outside the draw thread loop
 
-  if (showLegend) {
+  if (legendPage >= 0) {
     background(0);
-    drawLegend(legend);
+    drawLegend(legend[legendPage]);
     saveScreenshot();
     return;
   }
@@ -284,6 +288,10 @@ void drawCameras() {
   i++;
   text("mirror="+(mirror==true ? "ON": "OFF"), horzOffset, vertOffset*(i++));
   text("orientation="+(orientation==LANDSCAPE ? "LANDSCAPE":"PORTRAIT"), horzOffset, vertOffset*(i++));
+  text("multiCamEnabled=" + multiCamEnabled, horzOffset, vertOffset*(i++));
+  text("Broadcast IPAddress="+ broadcastIpAddress, horzOffset, vertOffset*(i++));
+  text("doubleTrigger="+doubleTrigger, horzOffset, vertOffset*(i++));
+  text("doubleTriggerDelay="+doubleTriggerDelay+" ms", horzOffset, vertOffset*(i++));
 }
 
 // Draw instruction and event text on screen
