@@ -21,7 +21,7 @@
 		"height": 2160,
 		"fps": 30,
 		"orientation": "portrait",
-		"pipeline": "pipeline: ksvideosrc device-index=0 ! image/jpeg,width=3840,height=2160,framerate=30/1 ! jpegdec ! videoconvert",
+		"pipelinealt": "pipeline: ksvideosrc device-index=0 ! image/jpeg,width=3840,height=2160,framerate=30/1 ! jpegdec ! videoconvert",
     },
 	"printer": {
 		"name": "Canon Selphy 1300",

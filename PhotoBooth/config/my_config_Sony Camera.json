@@ -1,0 +1,32 @@
+{	"description": "Photo Booth Configuration",
+	"debug": true,
+	"multiCamEnabled": true,
+	"configuration": {
+		"name": "Photobooth",
+		"outputFolderPath": "C:\\Apache24\\htdocs\\data\\images",
+		"IPaddress": "192.168.0.130",
+		"mirrorScreen": false,
+		"countDownStart": 3,
+		"fileType": "jpg",
+		"eventText": "Your Photo Booth Event",
+		"instructionLineText": "^Look Here^",
+		"finalCountdownText": "Freeze!",
+	},
+	"display": {
+		"width": 1920,
+		"height": 1080,
+	},
+    "camera": {
+    	"name" : "Sony Camera (Imaging Edge)", 
+        "width": 1920,
+		"height": 1080,
+		"fps": 30,
+		"orientation": "landscape",
+		"pipelinealt": "pipeline: ksvideosrc device-index=0 ! image/jpeg, width=1920, height=1080, framerate=30/1 ! jpegdec ! videoconvert",
+    },
+	"printer": {
+		"name": "Canon Selphy 1300",
+		"printWidth": 4.0,
+		"printHeight": 6.0,
+	}
+}

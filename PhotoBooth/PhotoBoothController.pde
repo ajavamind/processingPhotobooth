@@ -218,7 +218,7 @@ class PhotoBoothController {
       textSize(fontSize);
       fill(255);
     } else if (digit == -1) {
-      // flash screen and k photo
+      // flash screen and take photo
       background(0);
       takePhoto(doubleTrigger, false);  // take photo
       boolean done = incrementState();
