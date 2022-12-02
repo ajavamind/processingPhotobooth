@@ -220,7 +220,7 @@ public void draw() {
 
   if (showCameras && cameras != null) {
     background(0);
-    drawCameras();
+    drawCameraList();
     saveScreenshot();
     return;
   }
@@ -268,7 +268,7 @@ void drawLegend(String[] legend) {
   }
 }
 
-void drawCameras() {
+void drawCameraList() {
   fill(255);
   int vertOffset = fontSize;
   int horzOffset = 20;
