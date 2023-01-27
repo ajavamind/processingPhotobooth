@@ -1,0 +1,6 @@
+Photobooth Configuration file for Canon SELPHY CP1300
+
+photobooth print command line
+rotated left needed because photobooth does not keep autorotate information when it moves to data\print directory
+
+"C:\Program Files\IrfanView\i_view64.exe" %s /rotate_l  /print="Canon SELPHY CP1300" /ini="C:\CP1300"

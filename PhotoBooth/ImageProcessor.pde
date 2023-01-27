@@ -17,6 +17,7 @@ class ImageProcessor {
   }
 
   public PImage processImage(PImage temp) {
+    temp.loadPixels();
     switch (filterNum) {
     case 0:
       temp.filter(0);

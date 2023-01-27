@@ -1,7 +1,7 @@
-// Multi Remote Camera Control
+// Multi Remote Camera Android App Control
 // Broadcasts focus and shutter trigger on local network to
 // Android devices running Multi Remote Camera application
-// and Arduino devices waiting for UDP messages
+// and Arduino devices waiting for UDP messages to control connected cameras
 
 import netP5.*;
 //import oscP5.*; // does not use this part of oscP5 library

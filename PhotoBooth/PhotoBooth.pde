@@ -9,7 +9,7 @@ import java.util.Date;
 import java.util.Enumeration;
 import java.util.Locale;
 
-private static final boolean DEBUG = false;
+private static final boolean DEBUG = true;
 String VERSION = "1.4.11";
 
 Capture video;
@@ -17,18 +17,20 @@ private final static int NUM_BUFFERS = 2;
 volatile PImage[] camImage = new PImage[NUM_BUFFERS];
 volatile int camIndex = 0;
 volatile int nextIndex = 1;
+boolean streaming = false;
 
 PFont font;
 int fontSize;
 int largeFontSize;
 PhotoBoothController photoBoothController;
 ImageProcessor imageProcessor;
-boolean runFilter = true;  // set to false when RENDERER is P2D or P3D
 
 String RENDERER = JAVA2D;
 //String RENDERER = P2D;  // a bug in video library prevents this render mode from working with filters
 //String RENDERER = P3D;
-float FRAME_RATE = 20;
+int renderer = 0; // JAVA2D 0, P2D 1, P3D 2
+boolean runFilter = true;  // set to false when RENDERER is P2D or P3D until video library fixed
+float FRAME_RATE = 24;
 float delayFactor = 3;
 float timeoutFactor = 3;
 
@@ -50,11 +52,12 @@ boolean screenshot = false;
 int screenshotCounter = 1;
 
 public void setup() {
-  initConfig();
-  fullScreen(RENDERER);
+  //fullScreen(RENDERER);
   //size(1080, 1920, RENDERER);  // for debug
-  //size(1920, 1080, RENDERER);  // for debug
+  size(1920, 1080, RENDERER);  // for debug
   //size(3840, 2160, RENDERER);  // for debug
+
+  initConfig();
 
   screenWidth = width;
   screenHeight = height;
@@ -81,7 +84,7 @@ public void setup() {
   legend1 = loadStrings("keyLegend.txt");
   legend2 = loadStrings("keyLegend2.txt");
   legend = new String[][] { legend1, legend2};
-  
+
   if (OUTPUT_FOLDER_PATH.equals("output")) {  // default
     //OUTPUT_FOLDER_PATH = sketchPath() + File.separator + "output";
     OUTPUT_FOLDER_PATH = sketchPath("output");
@@ -158,45 +161,46 @@ public void setup() {
   // force focus on window so that key input always works without a mouse
   if (buildMode == JAVA_MODE) {
     try {
-      if (RENDERER.equals(P2D) || RENDERER.equals(P3D)) {
+      if (RENDERER.equals(P2D)) {
         ((com.jogamp.newt.opengl.GLWindow) surface.getNative()).requestFocus();  // for P2D
         delayFactor = 3;
         timeoutFactor = 3;
+        renderer = 1;
+        runFilter = false;   // temporary until video library fixes bug
+        if (DEBUG) println("No Filter!");
+      } else if (RENDERER.equals(P3D)) {
+        ((com.jogamp.newt.opengl.GLWindow) surface.getNative()).requestFocus();  // for P2D
+        delayFactor = 3;
+        timeoutFactor = 3;
+        renderer = 2;
+        runFilter = false;   // temporary until video library fixes bug
+        if (DEBUG) println("No Filter!");
       } else {
         ((java.awt.Canvas) surface.getNative()).requestFocus();  // for JAVA2D (default)
         delayFactor = .66;
         timeoutFactor = 3;
+        renderer = 0;
       }
     }
     catch (Exception ren) {
       println("Renderer: "+RENDERER+ " Window focus exception: " + ren.toString());
+      renderer = 0;
     }
   }
   photoBoothController.setTimeouts(delayFactor, timeoutFactor);
   surface.setTitle(titleText);
   if (DEBUG) println("Renderer: "+RENDERER);
   if (DEBUG) println("delayFactor = "+delayFactor+" timeoutFactor="+timeoutFactor);
-  // temporary until video library fixes bug
-  if (RENDERER.equals(P2D) || RENDERER.equals(P3D)) {
-    runFilter = false;
-    if (DEBUG) println("No Filter!");
-  }
 
   if (DEBUG) println("finished setup()");
 }
 
 void captureEvent(Capture camera) {
+  image(camera, 0, 0, 0, 0);  // work around for P2D and P3D Capture buffer not loaded
   camera.read();
-  // buffer captured video frame
-  if (RENDERER.equals(P2D) || RENDERER.equals(P3D)) {
-    if (runFilter) {
-      PImage temp = createImage(camera.width, camera.height, RGB);
-      camera.loadPixels();
-      arrayCopy(camera.pixels, temp.pixels);
-      camImage[nextIndex] = temp;
-    } else {
-      camImage[nextIndex] = camera;
-    }
+  if (renderer > 0) { // P2D and P3D
+    camera.loadPixels(); // needed for P2D. P3D
+    camImage[nextIndex] = camera;
   } else {  // JAVA2D
     camImage[nextIndex] = camera.copy();
   }
@@ -204,6 +208,7 @@ void captureEvent(Capture camera) {
   camIndex = nextIndex;
   nextIndex++;
   nextIndex = nextIndex & 1; // alternating 2 buffers
+  streaming = true;
 }
 
 public void draw() {
@@ -237,6 +242,9 @@ public void draw() {
     saveScreenshot();
     return;
   }
+
+  // wait for video buffered image
+  if (!streaming) return;
 
   if (photoBoothController.endPhotoShoot) {
     photoBoothController.oldShoot(); // show result

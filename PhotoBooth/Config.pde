@@ -61,6 +61,7 @@ JSONObject configuration;
 JSONObject display;
 JSONObject camera;
 JSONObject printer;
+String configFilenamePath;
 
 void initConfig() {
   if (buildMode == JAVA_MODE) {
@@ -71,11 +72,12 @@ void initConfig() {
 }
 
 void readConfig() {
-  String filenamePath = sketchPath()+File.separator+"config"+File.separator+"my_config.json";
-  if (!fileExists(filenamePath)) {
-    filenamePath = sketchPath()+File.separator+"config"+File.separator+"config.json"; // default for development code test
+  configFilenamePath = sketchPath()+File.separator+"config"+File.separator+"my_config.json";
+  if (!fileExists(configFilenamePath)) {
+    configFilenamePath = sketchPath()+File.separator+"config"+File.separator+"config.json"; // default for development code test
   }
-  configFile = loadJSONObject(filenamePath);
+  if (DEBUG) println("read configuration file: "+configFilenamePath);
+  configFile = loadJSONObject(configFilenamePath);
   //configFile = loadJSONObject("config.json");
   //configFile = loadJSONObject(sketchPath("config")+File.separator+"config.json");
   configuration = configFile.getJSONObject("configuration");

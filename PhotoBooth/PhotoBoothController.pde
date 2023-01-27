@@ -132,7 +132,11 @@ class PhotoBoothController {
 
   public void processImage(PImage input) {
     if (input == null) return;
+    try {
     if (imageProcessor.filterNum > 0) currentRawImage = input.get();
+    } catch (Exception excp) {
+      println("Exception "+excp);
+    }
     if (runFilter) {
       currentImage = imageProcessor.processImage(input);
     } else {
@@ -334,6 +338,7 @@ class PhotoBoothController {
   // Save image
   public void saveImage(PImage img, int index, String outputFolderPath, String outputFilename, String suffix, String filetype) {
     String filename;
+    if (img == null) return;
     // crop and save
     collage[index] = cropForPrint(img, printAspectRatio);  // adjusts for mirror
     filename = outputFolderPath + File.separator + outputFilename + suffix +"_"+ number(index+1) + "_cr"+ "." + filetype;

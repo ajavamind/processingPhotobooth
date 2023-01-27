@@ -125,8 +125,8 @@ int keyUpdate() {
   case KEYCODE_Q:
     if (DEBUG) println("Exit Program");
     if (video != null) {
-      video.stop();
-      video.dispose();
+      //video.stop();
+      //video.dispose();
     }
     stopUDP();
     exit();
