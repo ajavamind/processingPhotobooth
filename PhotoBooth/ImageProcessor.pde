@@ -7,7 +7,7 @@ class ImageProcessor {
 
   // broken mirror filter parameters
   // Size of each cell in the grid
-  int cellSize = 40;
+  int cellSize = 16;
   // Number of columns and rows for mirror
   int cols, rows;
 
@@ -29,21 +29,25 @@ class ImageProcessor {
       temp.filter(THRESHOLD, 0.5);
       break;
     case 3:
-      temp.filter(POSTERIZE, 13);
+      temp.filter(INVERT);
+      temp.filter(THRESHOLD, 0.5);
       break;
     case 4:
-      temp.filter(POSTERIZE, 8);  // best
+      temp.filter(POSTERIZE, 13);
       break;
     case 5:
-      temp.filter(POSTERIZE, 5);
+      temp.filter(POSTERIZE, 8);  // best
       break;
     case 6:
-      temp.filter(POSTERIZE, 4);
+      temp.filter(POSTERIZE, 5);
       break;
     case 7:
-      temp.filter(POSTERIZE, 3);
+      temp.filter(POSTERIZE, 4);
       break;
     case 8:
+      temp.filter(POSTERIZE, 3);
+      break;
+    case 9:
       temp = mirror(temp);
       break;
     default:
@@ -65,7 +69,7 @@ class ImageProcessor {
     PGraphics pg;
     int length = img.width*img.height;
     img.loadPixels();
-    pg = createGraphics(img.width, img.height, RENDERER);
+    pg = createGraphics(img.width, img.height);
     pg.beginDraw();
     pg.background(255);
     // Begin loop for columns

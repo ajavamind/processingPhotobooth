@@ -25,8 +25,8 @@ int largeFontSize;
 PhotoBoothController photoBoothController;
 ImageProcessor imageProcessor;
 
-String RENDERER = JAVA2D;
-//String RENDERER = P2D;  // a bug in video library prevents this render mode from working with filters
+//String RENDERER = JAVA2D;
+String RENDERER = P2D;  // a bug in video library prevents this render mode from working with filters
 //String RENDERER = P3D;
 int renderer = 0; // JAVA2D 0, P2D 1, P3D 2
 boolean runFilter = true;  // set to false when RENDERER is P2D or P3D until video library fixed
@@ -52,9 +52,9 @@ boolean screenshot = false;
 int screenshotCounter = 1;
 
 public void setup() {
-  //fullScreen(RENDERER);
+  fullScreen(RENDERER);
   //size(1080, 1920, RENDERER);  // for debug
-  size(1920, 1080, RENDERER);  // for debug
+  //size(1920, 1080, RENDERER);  // for debug
   //size(3840, 2160, RENDERER);  // for debug
 
   initConfig();
@@ -166,14 +166,14 @@ public void setup() {
         delayFactor = 3;
         timeoutFactor = 3;
         renderer = 1;
-        runFilter = false;   // temporary until video library fixes bug
+        runFilter = true;   // temporary until video library fixes bug
         if (DEBUG) println("No Filter!");
       } else if (RENDERER.equals(P3D)) {
         ((com.jogamp.newt.opengl.GLWindow) surface.getNative()).requestFocus();  // for P2D
         delayFactor = 3;
         timeoutFactor = 3;
         renderer = 2;
-        runFilter = false;   // temporary until video library fixes bug
+        runFilter = true;   // temporary until video library fixes bug
         if (DEBUG) println("No Filter!");
       } else {
         ((java.awt.Canvas) surface.getNative()).requestFocus();  // for JAVA2D (default)
@@ -195,21 +195,21 @@ public void setup() {
   if (DEBUG) println("finished setup()");
 }
 
-void captureEvent(Capture camera) {
-  image(camera, 0, 0, 0, 0);  // work around for P2D and P3D Capture buffer not loaded
-  camera.read();
-  if (renderer > 0) { // P2D and P3D
-    camera.loadPixels(); // needed for P2D. P3D
-    camImage[nextIndex] = camera;
-  } else {  // JAVA2D
-    camImage[nextIndex] = camera.copy();
-  }
+//void captureEvent(Capture camera) {
+//  image(camera, 0, 0, 0, 0);  // work around for P2D and P3D Capture buffer not loaded
+//  camera.read();
+//  if (renderer > 0) { // P2D and P3D
+//    camera.loadPixels(); // needed for P2D. P3D
+//    camImage[nextIndex] = camera;
+//  } else {  // JAVA2D
+//    camImage[nextIndex] = camera.copy();
+//  }
 
-  camIndex = nextIndex;
-  nextIndex++;
-  nextIndex = nextIndex & 1; // alternating 2 buffers
-  streaming = true;
-}
+//  camIndex = nextIndex;
+//  nextIndex++;
+//  nextIndex = nextIndex & 1; // alternating 2 buffers
+//  streaming = true;
+//}
 
 public void draw() {
   //System.gc();
@@ -244,7 +244,28 @@ public void draw() {
   }
 
   // wait for video buffered image
-  if (!streaming) return;
+  //if (!streaming) return;
+
+  if (video.available()) {
+    image(video, 0, 0, 0, 0);
+    video.read();
+    if (RENDERER.equals(P2D) || RENDERER.equals(P3D)) {
+      if (runFilter) {
+        PImage temp = createImage(video.width, video.height, RGB);
+        video.loadPixels();
+        arrayCopy(video.pixels, temp.pixels);
+        camImage[nextIndex] = temp;
+      } else {
+        camImage[nextIndex] = video;
+      }
+    } else {  // JAVA2D
+      camImage[nextIndex] = video.copy();
+    }
+
+    camIndex = nextIndex;
+    nextIndex++;
+    nextIndex = nextIndex & 1; // alternating 2 buffers
+  }
 
   if (photoBoothController.endPhotoShoot) {
     photoBoothController.oldShoot(); // show result
