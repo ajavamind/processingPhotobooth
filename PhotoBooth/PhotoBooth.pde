@@ -169,7 +169,7 @@ public void setup() {
         runFilter = true;   // temporary until video library fixes bug
         if (DEBUG) println("No Filter!");
       } else if (RENDERER.equals(P3D)) {
-        ((com.jogamp.newt.opengl.GLWindow) surface.getNative()).requestFocus();  // for P2D
+        ((com.jogamp.newt.opengl.GLWindow) surface.getNative()).requestFocus();  // for P3D
         delayFactor = 3;
         timeoutFactor = 3;
         renderer = 2;
