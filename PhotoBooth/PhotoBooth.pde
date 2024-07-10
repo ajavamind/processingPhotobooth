@@ -25,8 +25,8 @@ int largeFontSize;
 PhotoBoothController photoBoothController;
 ImageProcessor imageProcessor;
 
-//String RENDERER = JAVA2D;
-String RENDERER = P2D;  // a bug in video library prevents this render mode from working with filters
+String RENDERER = JAVA2D;
+//String RENDERER = P2D;  // a bug in video library prevents this render mode from working with filters
 //String RENDERER = P3D;
 int renderer = 0; // JAVA2D 0, P2D 1, P3D 2
 boolean runFilter = true;  // set to false when RENDERER is P2D or P3D until video library fixed
